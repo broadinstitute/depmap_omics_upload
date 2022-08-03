@@ -14,14 +14,14 @@ def getPRToRelease(date_col_dict=DATE_COL_DICT):
     Returns:
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
-    today = int(str(date.today()).replace("-", ""))
+    today = str(date.today())
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
     prs = dict()
     for k, v in date_col_dict.items():
         prs_with_date = pr_table[~(pr_table[v] == "")]
         prs[k] = prs_with_date[
-            (prs_with_date[v].astype(int) <= today)
+            (prs_with_date[v] <= today)
             & (prs_with_date.ProfileSource == "bam")
         ].index.tolist()
     return prs
