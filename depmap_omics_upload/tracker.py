@@ -2,8 +2,6 @@
 from genepy.utils import helper as h
 import numpy as np
 import os
-import pandas as pd
-from depmapomics import loading
 from gsheets import Sheets
 from depmapomics.config import *
 from depmapomics import terra as myterra
