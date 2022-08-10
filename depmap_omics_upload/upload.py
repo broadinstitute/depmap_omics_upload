@@ -221,12 +221,11 @@ def initVirtualDatasets(
 ):
     """initialize both PR- and Model-level taiga virtual datasets for all 4 portals by uploading an empty dummy file
     """
-    virutal_pr = dict()
-    virtual_model = dict()
+    virutal = dict()
     tc = TaigaClient()
     for p in portals:
-        virutal_pr[p] = tc.create_dataset(
-            p + "_" + samplesetname + "_profile",
+        virutal[p] = tc.create_dataset(
+            p + "_" + samplesetname,
             dataset_description=samplesetname
             + " release of the DepMap dataset for the DepMap Portal. Please look at the README file for additional information about this dataset. ",
             upload_files=[
@@ -239,21 +238,7 @@ def initVirtualDatasets(
             ],
             folder_id=taiga_folder_id,
         )
-        virtual_model[p] = tc.create_dataset(
-            p + "_" + samplesetname + "_model",
-            dataset_description=samplesetname
-            + " release of the DepMap dataset for the DepMap Portal. Please look at the README file for additional information about this dataset. ",
-            upload_files=[
-                {
-                    "path": "/dev/null",
-                    "name": "init",
-                    "format": "Raw",
-                    "encoding": "utf-8",
-                }
-            ],
-            folder_id=taiga_folder_id,
-        )
-    return virutal_pr, virtual_model
+    return virutal
 
 
 def uploadPRMatrix(
@@ -355,7 +340,7 @@ def uploadModelMatrix(
         upload_files=[
             {
                 "path": folder + virtual_fn + ".csv",
-                "name": virtual_fn + "_model",
+                "name": virtual_fn,
                 "format": matrix_format,
                 "encoding": "utf-8",
             },
@@ -438,13 +423,13 @@ def uploadAuxTables(
             upload_files=[
                 {
                     "path": folder + "/" + portal + "_" + ach_table_name + ".csv",
-                    "name": "Achilles_choice_table",
+                    "name": "OmicsDefaultModelConditionProfiles",
                     "format": "TableCSV",
                     "encoding": "utf-8",
                 },
                 {
                     "path": folder + "/" + portal + "_" + default_table_name + ".csv",
-                    "name": "default_model_table",
+                    "name": "OmicsDefaultModelProfiles",
                     "format": "TableCSV",
                     "encoding": "utf-8",
                 },
@@ -489,18 +474,6 @@ def makePRLvMatrices(virtual_ids=VIRTUAL):
                     pr_col=SAMPLEID,
                     change_desc="adding " + virtual,
                 )
-        if portal == "internal":
-            for latest, virtual in VIRTUAL_FILENAMES_NUMMAT_EXP_INTERNAL.items():
-                uploadPRMatrix(
-                    prs_to_release,
-                    TAIGA_EXPRESSION,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "NumericMatrixCSV",
-                    pr_col=SAMPLEID,
-                    change_desc="adding " + virtual,
-                )
 
 
 def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME):
@@ -539,18 +512,6 @@ def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME)
                     latest,
                     virtual,
                     "TableCSV",
-                    pr_col=SAMPLEID,
-                    change_desc="adding " + virtual,
-                )
-        if portal == "internal":
-            for latest, virtual in VIRTUAL_FILENAMES_NUMMAT_EXP_INTERNAL.items():
-                uploadModelMatrix(
-                    pr2model_dict,
-                    TAIGA_EXPRESSION,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "NumericMatrixCSV",
                     pr_col=SAMPLEID,
                     change_desc="adding " + virtual,
                 )
