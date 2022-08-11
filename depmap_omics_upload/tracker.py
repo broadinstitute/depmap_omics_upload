@@ -11,6 +11,7 @@ import dalmatian as dm
 import signal
 import gumbo_client
 import gumbo_client.utils as gumbo_utils
+from datetime import date
 
 
 # condense all interactions with tracker (for emeril integration)
@@ -170,16 +171,12 @@ class SampleTracker:
         groups=[],
         raise_error=True,
         arg_max_length=100000,
-        bamcols=["internal_bam_filepath", "internal_bai_filepath"],
-        refsheet_url="https://docs.google.com/spreadsheets/d/1Pgb5fIClGnErEqzxpU7qqX6ULpGTDjvzWwDN8XUJKIY",
-        privacy_sheeturl="https://docs.google.com/spreadsheets/d/115TUgA1t_mD32SnWAGpW9OKmJ2W5WYAOs3SuSdedpX4",
+        bamcols=["bam_filepath", "bai_filepath"],
         unshare=False,
         requesterpays_project="",
     ):
         """
     same as shareTerraBams but is completed to work with CCLE bams from the CCLE sample tracker
-
-    You need to have gsheet installed and you '~/.client_secret.json', '~/.storage.json' set up
 
     Args:
     ----
@@ -196,21 +193,30 @@ class SampleTracker:
     --------
         a list of the gs path we have been giving access to
     """
-        sheets = Sheets.from_files("~/.client_secret.json", "~/.storage.json")
-        print(
-            "You need to have gsheet installed and you '~/.client_secret.json', '~/.storage.json' set up"
-        )
-        privacy = sheets.get(privacy_sheeturl).sheets[6].to_frame()
-        refdata = sheets.get(refsheet_url).sheets[0].to_frame(index_col=0)
-        blacklist = [i for i in privacy["blacklist"].values.tolist() if i is not np.nan]
+        refdata = self.read_seq_table()
+        pr_table = self.read_pr_table()
+        blacklist = [i for i in refdata["blacklist"].values.tolist() if i == 1]
         blacklisted = set(blacklist) & set(samples)
-        print("we have " + str(len(blacklist)) + " blacklisted files")
+        print("we have " + str(len(blacklist)) + " files blacklisted for low quality")
         if len(blacklisted):
             print("these lines are blacklisted " + str(blacklisted))
             if raise_error:
                 raise ValueError("blacklistedlines")
         if type(users) is str:
             users = [users]
+        
+        embargoed = []
+        for s in samples:
+            pr_id = refdata.loc[s, "ProfileID"]
+            release_date = pr_table.loc[pr_id, "InternalReleaseDate"]
+            today = str(date.today())
+            if release_date == "" or release_date > today:
+                embargoed.append(s)
+
+        if len(embargoed) > 0:
+            print("the following lines are currently under embargo, can't share the files yet!")
+            print(embargoed)
+            samples = [s in samples if s not in embargoed]
 
         togiveaccess = np.ravel(refdata[bamcols].loc[samples].values)
         usrs = ""
@@ -246,7 +252,6 @@ class SampleTracker:
                         print("Awakened")
                         return None
 
-        print("the files are stored here:\n\n" + refsheet_url)
         print("\n\njust install and use gsutil to copy them")
         print("https://cloud.google.com/storage/docs/gsutil_install")
         print("https://cloud.google.com/storage/docs/gsutil/commands/cp")

@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import date
 
 from genepy.utils import helper as h
-from depmapomics import tracker as track
+from depmap_omics_upload import tracker as track
 from depmapomics.config import *
 from taigapy import TaigaClient
 
@@ -543,7 +543,6 @@ def updateEternal(
 
     files = [
         VIRTUAL_FILENAMES_NUMMAT_EXP.values()
-        + VIRTUAL_FILENAMES_NUMMAT_EXP_INTERNAL.values()
         + VIRTUAL_FILENAMES_NUMMAT_CN.values()
         + VIRTUAL_FILENAMES_NUMMAT_MUT.values()
         + VIRTUAL_FILENAMES_GERMLINE.values()
