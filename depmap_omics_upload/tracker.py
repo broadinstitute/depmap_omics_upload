@@ -33,7 +33,7 @@ class SampleTracker:
         self.seq_table_index = SEQ_TABLE_INDEX
         self.sample_table_name = SAMPLE_TABLE_NAME
         # hard-coded for now, waiting for independent staging envs to be enabled
-        self.client = gumbo_client.Client(config_dir="~/.config/gumbo-staging", username=GUMBO_CLIENT_USERNAME)
+        self.client = gumbo_client.Client(username=GUMBO_CLIENT_USERNAME)
         self.mapping_utils = gumbo_utils.NameMappingUtils()
 
     def commit_gumbo(self):
@@ -216,7 +216,7 @@ class SampleTracker:
         if len(embargoed) > 0:
             print("the following lines are currently under embargo, can't share the files yet!")
             print(embargoed)
-            samples = [s in samples if s not in embargoed]
+            samples = [s for s in samples if s not in embargoed]
 
         togiveaccess = np.ravel(refdata[bamcols].loc[samples].values)
         usrs = ""

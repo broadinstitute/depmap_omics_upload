@@ -59,12 +59,12 @@ def makeAchillesChoiceTable(
         # pick the PR from the most prioritized source according to the
         # ranking in source_priority
         elif len(prs_in_mc[prs_in_mc.Datatype == "rna"]) > 1:
-            cds_ids = prs_in_mc[prs_in_mc.Datatype == "rna"].CDSID.tolist()
+            cds_ids = prs_in_mc[prs_in_mc.Datatype == "rna"].MainSequencingID.tolist()
             # at this point it is guaranteed that all cds_ids have different sources
             subset_seq_table = seq_table[seq_table.index.isin(cds_ids)]
             subset_seq_table.source = subset_seq_table.source.replace(source_priority)
             latest_cds_id = subset_seq_table.loc[cds_ids, "source"].idxmin()
-            pr = subset_pr_table[subset_pr_table.CDSID == latest_cds_id].index[0]
+            pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id].index[0]
             rows.append((mc, pr, "rna"))
         # dna
         # if there is only one dna (wes + wgs) PR associated with this MC, pick that PR
@@ -85,8 +85,8 @@ def makeAchillesChoiceTable(
             )
             > 1
         ):
-            cds_ids_wgs = prs_in_mc[prs_in_mc.Datatype == "wgs"].CDSID.tolist()
-            cds_ids_wes = prs_in_mc[prs_in_mc.Datatype == "wes"].CDSID.tolist()
+            cds_ids_wgs = prs_in_mc[prs_in_mc.Datatype == "wgs"].MainSequencingID.tolist()
+            cds_ids_wes = prs_in_mc[prs_in_mc.Datatype == "wes"].MainSequencingID.tolist()
             pr = ""
             # if this MC doesn't have any wgs PRs
             if len(cds_ids_wgs) == 0:
@@ -97,7 +97,7 @@ def makeAchillesChoiceTable(
                     source_priority
                 )
                 latest_cds_id_wes = subset_seq_table.loc[cds_ids_wes, "source"].idxmin()
-                pr = subset_pr_table[subset_pr_table.CDSID == latest_cds_id_wes].index[
+                pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id_wes].index[
                     0
                 ]
             # if this MC has wgs PR(s)
@@ -109,7 +109,7 @@ def makeAchillesChoiceTable(
                     source_priority
                 )
                 latest_cds_id_wgs = subset_seq_table.loc[cds_ids_wgs, "source"].idxmin()
-                pr = subset_pr_table[subset_pr_table.CDSID == latest_cds_id_wgs].index[
+                pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id_wgs].index[
                     0
                 ]
             rows.append((mc, pr, "dna"))
@@ -156,11 +156,11 @@ def makeDefaultModelTable(
         # pick the PR from the most prioritized source according to the
         # ranking in source_priority
         elif len(prs_in_model[prs_in_model.Datatype == "rna"]) > 1:
-            cds_ids = prs_in_model[prs_in_model.Datatype == "rna"].CDSID.tolist()
+            cds_ids = prs_in_model[prs_in_model.Datatype == "rna"].MainSequencingID.tolist()
             subset_seq_table = seq_table[seq_table.index.isin(cds_ids)]
             subset_seq_table.source = subset_seq_table.source.replace(source_priority)
             latest_cds_id = subset_seq_table.loc[cds_ids, "source"].idxmin()
-            pr = subset_pr_table[subset_pr_table.CDSID == latest_cds_id].index[0]
+            pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id].index[0]
             rows.append((m, pr, "rna"))
         # dna
         # if there is only one dna (wes + wgs) PR associated with this Model, pick that PR
@@ -185,10 +185,10 @@ def makeDefaultModelTable(
             )
             > 1
         ):
-            cds_ids_wgs = prs_in_model[prs_in_model.Datatype == "wgs"].CDSID.tolist()
+            cds_ids_wgs = prs_in_model[prs_in_model.Datatype == "wgs"].MainSequencingID.tolist()
             cds_ids_wes = prs_in_model[
-                (prs_in_model.Datatype == "wes") & (prs_in_model.CDSID != "")
-            ].CDSID.tolist()  # CDSID is '' when the profile is in legacy
+                (prs_in_model.Datatype == "wes") & (prs_in_model.MainSequencingID != "")
+            ].MainSequencingID.tolist()  # MainSequencingID is '' when the profile is in legacy
             pr = ""
             # if no wgs, look at MC table and select the most prioritized source
             # according to the ranking in source_priority
@@ -198,7 +198,7 @@ def makeDefaultModelTable(
                     source_priority
                 )
                 latest_cds_id_wes = subset_seq_table.loc[cds_ids_wes, "source"].idxmin()
-                pr = subset_pr_table[subset_pr_table.CDSID == latest_cds_id_wes].index[
+                pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id_wes].index[
                     0
                 ]
             # if there is wgs, always select wgs
@@ -208,7 +208,7 @@ def makeDefaultModelTable(
                     source_priority
                 )
                 latest_cds_id_wgs = subset_seq_table.loc[cds_ids_wgs, "source"].idxmin()
-                pr = subset_pr_table[subset_pr_table.CDSID == latest_cds_id_wgs].index[
+                pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id_wgs].index[
                     0
                 ]
             rows.append((m, pr, "dna"))
@@ -217,7 +217,7 @@ def makeDefaultModelTable(
 
 
 def initVirtualDatasets(
-    samplesetname=SAMPLESETNAME, taiga_folder_id=VIRTUAL_FOLDER, portals=DATASETS
+    samplesetname, taiga_folder_id=VIRTUAL_FOLDER, portals=DATASETS
 ):
     """initialize both PR- and Model-level taiga virtual datasets for all 4 portals by uploading an empty dummy file
     """
@@ -274,7 +274,7 @@ def uploadPRMatrix(
         subset_mat = to_subset[to_subset.index.isin(prs)]
         subset_mat.to_csv(folder + virtual_fn + ".csv")
     else:
-        subset_mat = subset_mat[subset_mat[pr_col].isin(prs)]
+        subset_mat = to_subset[to_subset[pr_col].isin(prs)]
         subset_mat.to_csv(folder + virtual_fn + ".csv", index=False)
 
     print("uploading ", virtual_fn, " to virtual")
@@ -284,7 +284,7 @@ def uploadPRMatrix(
         upload_files=[
             {
                 "path": folder + virtual_fn + ".csv",
-                "name": virtual_fn + "_profile",
+                "name": virtual_fn,
                 "format": matrix_format,
                 "encoding": "utf-8",
             },
@@ -328,8 +328,8 @@ def uploadModelMatrix(
         )
         subset_mat.to_csv(folder + virtual_fn + ".csv")
     else:
-        subset_mat = subset_mat[
-            subset_mat[pr_col].isin(set(pr2model_dict.keys()))
+        subset_mat = to_subset[
+            to_subset[pr_col].isin(set(pr2model_dict.keys()))
         ].replace({SAMPLEID: pr2model_dict})
         subset_mat.to_csv(folder + virtual_fn + ".csv", index=False)
 
@@ -438,7 +438,7 @@ def uploadAuxTables(
         )
 
 
-def makePRLvMatrices(virtual_ids=VIRTUAL):
+def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, files_table=LATEST2FN_TABLE_PR):
     """for each portal, save and upload profile-indexed data matrices
     
     Args:
@@ -450,7 +450,7 @@ def makePRLvMatrices(virtual_ids=VIRTUAL):
     prs_allportals = getPRToRelease()
     for portal, prs_to_release in prs_allportals.items():
         print("uploading profile-level matrices to ", portal)
-        for latest_id, fn_dict in LATEST2FN_NUMMAT.items():
+        for latest_id, fn_dict in files_nummat.items():
             for latest, virtual in fn_dict.items():
                 uploadPRMatrix(
                     prs_to_release,
@@ -462,7 +462,7 @@ def makePRLvMatrices(virtual_ids=VIRTUAL):
                     pr_col="index",
                     change_desc="adding " + virtual,
                 )
-        for latest_id, fn_dict in LATEST2FN_TABLE.items():
+        for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
                 uploadPRMatrix(
                     prs_to_release,
@@ -476,7 +476,7 @@ def makePRLvMatrices(virtual_ids=VIRTUAL):
                 )
 
 
-def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME):
+def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME, files_nummat=LATEST2FN_NUMMAT_MODEL, files_table=LATEST2FN_TABLE_MODEL):
     """for each portal, save and upload profile-indexed data matrices
     
     Args:
@@ -491,7 +491,7 @@ def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME)
         pr2model_dict = dict(list(zip(default_table.ProfileID, default_table.ModelID)))
         h.dictToFile(pr2model_dict, folder + "/" + portal + "_pr2model_renaming.json")
         print("uploading model-level matrices to", portal)
-        for latest_id, fn_dict in LATEST2FN_NUMMAT.items():
+        for latest_id, fn_dict in files_nummat.items():
             for latest, virtual in fn_dict.items():
                 uploadModelMatrix(
                     pr2model_dict,
@@ -503,7 +503,7 @@ def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME)
                     pr_col="index",
                     change_desc="adding " + virtual,
                 )
-        for latest_id, fn_dict in LATEST2FN_TABLE.items():
+        for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
                 uploadModelMatrix(
                     pr2model_dict,
@@ -564,7 +564,7 @@ def updateEternal(
 
 def CCLEupload(taiga_ids=""):
     if taiga_ids == "":
-        taiga_ids = initVirtualDatasets()
+        taiga_ids = initVirtualDatasets(samplesetname=SAMPLESETNAME)
 
     makePRLvMatrices(virtual_ids=taiga_ids)
     makeModelLvMatrices(virtual_ids=taiga_ids)
