@@ -17,6 +17,7 @@ def getPRToRelease(date_col_dict=DATE_COL_DICT):
     today = str(date.today())
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
+    mytracker.close_gumbo_client()
     prs = dict()
     for k, v in date_col_dict.items():
         prs_with_date = pr_table[~(pr_table[v] == "")]
@@ -47,6 +48,7 @@ def makeAchillesChoiceTable(
     subset_pr_table = pr_table.loc[prs]
     subset_pr_table = subset_pr_table[subset_pr_table.BlacklistOmics != 1]
     mcs = set(subset_pr_table["ModelCondition"])
+    mytracker.close_gumbo_client()
     # we're only picking one PR per datatype (rna/dna) for each MC
     for mc in mcs:
         prs_in_mc = subset_pr_table[(subset_pr_table.ModelCondition == mc)]
@@ -140,6 +142,7 @@ def makeDefaultModelTable(
     subset_pr_table = subset_pr_table[subset_pr_table.BlacklistOmics != 1]
     mcs = set(subset_pr_table["ModelCondition"])
     models = set(mc_table.loc[mcs].ModelID)
+    mytracker.close_gumbo_client()
     # we're only picking one PR per datatype (rna/dna) for each Model
     for m in models:
         subset_mc_table = mc_table[mc_table.ModelID == m]
@@ -350,7 +353,7 @@ def uploadModelMatrix(
 
 
 def uploadGermlineMatrixModel(
-    pr2model_dict, portal, taiga_latest=TAIGA_CN, taiga_virtual="",
+    pr2model_dict, portal, taiga_latest=TAIGA_MUTATION, fn_mapping=VIRTUAL_FILENAMES_GUIDEMUT, taiga_virtual="",
 ):
     """subset, rename, save and upload to taiga germline binary matrix
     
@@ -362,43 +365,44 @@ def uploadGermlineMatrixModel(
     """
     folder = WORKING_DIR + portal + "/model/"
     h.createFoldersFor(folder)
-    # load cds-id indexed matrices for the current quarter
-    print("Germline matrix: loading from taiga latest")
-    tc = TaigaClient()
-    germline = tc.get(name=taiga_latest, file="merged_binary_germline")
+    for latest_fn, virtual_fn in fn_mapping.items():
+        # load pr-id indexed matrices for the current quarter
+        print("Germline matrix: loading from taiga latest")
+        tc = TaigaClient()
+        germline = tc.get(name=taiga_latest, file=latest_fn)
 
-    # subset and rename
-    print("Germline matrix: subsetting and renaming")
-    whitelist = [x for x in germline.columns if x in pr2model_dict]
-    whitelist_germline = germline[whitelist]
-    whitelist_germline = whitelist_germline.rename(columns=pr2model_dict)
-    whitelist_germline = whitelist_germline.astype(bool).astype(int)
-    sorted_mat = germline.iloc[:, :4].join(whitelist_germline)
-    sorted_mat["end"] = sorted_mat["end"].astype(int)
-    sorted_mat.to_csv(folder + "merged_binary_germline.csv", index=False)
+        # subset and rename
+        print("Germline matrix: subsetting and renaming")
+        whitelist = [x for x in germline.columns if x in pr2model_dict]
+        whitelist_germline = germline[whitelist]
+        whitelist_germline = whitelist_germline.rename(columns=pr2model_dict)
+        whitelist_germline = whitelist_germline.astype(bool).astype(int)
+        sorted_mat = germline.iloc[:, :4].join(whitelist_germline)
+        sorted_mat["end"] = sorted_mat["end"].astype(int)
+        sorted_mat.to_csv(folder + virtual_fn + ".csv", index=False)
 
-    # upload to taiga
-    print("Germline matrix: uploading to taiga")
-    tc.update_dataset(
-        dataset_id=taiga_virtual,
-        changes_description="adding model-level germline matrix",
-        upload_files=[
-            {
-                "path": folder + "merged_binary_germline.csv",
-                "name": "germline_mutation_model",
-                "format": "TableCSV",
-                "encoding": "utf-8",
-            },
-        ],
-        add_all_existing_files=True,
-    )
+        # upload to taiga
+        print("Germline matrix: uploading to taiga")
+        tc.update_dataset(
+            dataset_id=taiga_virtual,
+            changes_description="adding model-level germline matrix",
+            upload_files=[
+                {
+                    "path": folder + virtual_fn + ".csv",
+                    "name": virtual_fn,
+                    "format": "TableCSV",
+                    "encoding": "utf-8",
+                },
+            ],
+            add_all_existing_files=True,
+        )
 
 
 def uploadAuxTables(
     taiga_ids=VIRTUAL,
     ach_table_name=ACH_CHOICE_TABLE_NAME,
     default_table_name=DEFAULT_TABLE_NAME,
-    folder=WORKING_DIR + SAMPLESETNAME,
+    folder=WORKING_DIR + SAMPLESETNAME + "/",
 ):
     """upload achilles choice and default model table to all portals
     Args:
