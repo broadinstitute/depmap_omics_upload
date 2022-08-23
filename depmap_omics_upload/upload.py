@@ -352,7 +352,7 @@ def uploadModelMatrix(
     )
 
 
-def uploadGermlineMatrixModel(
+def uploadBinaryGuideMutationMatrixModel(
     pr2model_dict, portal, taiga_latest=TAIGA_MUTATION, fn_mapping=VIRTUAL_FILENAMES_GUIDEMUT, taiga_virtual="",
 ):
     """subset, rename, save and upload to taiga germline binary matrix
@@ -367,22 +367,24 @@ def uploadGermlineMatrixModel(
     h.createFoldersFor(folder)
     for latest_fn, virtual_fn in fn_mapping.items():
         # load pr-id indexed matrices for the current quarter
-        print("Germline matrix: loading from taiga latest")
+        print("Guide mutation matrix: loading from taiga latest")
         tc = TaigaClient()
         germline = tc.get(name=taiga_latest, file=latest_fn)
 
         # subset and rename
-        print("Germline matrix: subsetting and renaming")
+        print("Guide mutation matrix: subsetting and renaming")
         whitelist = [x for x in germline.columns if x in pr2model_dict]
         whitelist_germline = germline[whitelist]
         whitelist_germline = whitelist_germline.rename(columns=pr2model_dict)
         whitelist_germline = whitelist_germline.astype(bool).astype(int)
         sorted_mat = germline.iloc[:, :4].join(whitelist_germline)
         sorted_mat["end"] = sorted_mat["end"].astype(int)
+        # ONE-OFF:
+        sorted_mat = sorted_mat.rename(columns={"foldchange": "sgRNA"})
         sorted_mat.to_csv(folder + virtual_fn + ".csv", index=False)
 
         # upload to taiga
-        print("Germline matrix: uploading to taiga")
+        print("Guide mutation: uploading to taiga")
         tc.update_dataset(
             dataset_id=taiga_virtual,
             changes_description="adding model-level germline matrix",
@@ -442,7 +444,7 @@ def uploadAuxTables(
         )
 
 
-def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, files_table=LATEST2FN_TABLE_PR):
+def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, folder=WORKING_DIR + SAMPLESETNAME, files_table=LATEST2FN_TABLE_PR):
     """for each portal, save and upload profile-indexed data matrices
     
     Args:
@@ -464,6 +466,7 @@ def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, file
                     virtual,
                     "NumericMatrixCSV",
                     pr_col="index",
+                    folder=folder+ "/",
                     change_desc="adding " + virtual,
                 )
         for latest_id, fn_dict in files_table.items():
@@ -476,6 +479,7 @@ def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, file
                     virtual,
                     "TableCSV",
                     pr_col=SAMPLEID,
+                    folder=folder+ "/",
                     change_desc="adding " + virtual,
                 )
 
@@ -505,6 +509,7 @@ def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME,
                     virtual,
                     "NumericMatrixCSV",
                     pr_col="index",
+                    folder=folder+ "/",
                     change_desc="adding " + virtual,
                 )
         for latest_id, fn_dict in files_table.items():
@@ -517,9 +522,10 @@ def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME,
                     virtual,
                     "TableCSV",
                     pr_col=SAMPLEID,
+                    folder=folder+ "/",
                     change_desc="adding " + virtual,
                 )
-        uploadGermlineMatrixModel(
+        uploadBinaryGuideMutationMatrixModel(
             pr2model_dict, portal, taiga_virtual=virtual_ids[portal]
         )
 
