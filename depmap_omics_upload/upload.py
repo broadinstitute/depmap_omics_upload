@@ -18,6 +18,7 @@ def getPRToRelease(date_col_dict=DATE_COL_DICT):
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
     mytracker.close_gumbo_client()
+    pr_table = pr_table[pr_table.BlacklistOmics != True]
     prs = dict()
     for k, v in date_col_dict.items():
         prs_with_date = pr_table[~(pr_table[v] == "")]
