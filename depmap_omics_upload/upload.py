@@ -279,6 +279,7 @@ def uploadPRMatrix(
         subset_mat.to_csv(folder + virtual_fn + ".csv")
     else:
         subset_mat = to_subset[to_subset[pr_col].isin(prs)]
+        subset_mat = subset_mat.rename(columns={pr_col: "ProfileID"})
         subset_mat.to_csv(folder + virtual_fn + ".csv", index=False)
 
     print("uploading ", virtual_fn, " to virtual")
@@ -485,7 +486,7 @@ def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, fold
                 )
 
 
-def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME, files_nummat=LATEST2FN_NUMMAT_MODEL, files_table=LATEST2FN_TABLE_MODEL):
+def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME, files_nummat=LATEST2FN_NUMMAT_MODEL, files_table=LATEST2FN_TABLE_MODEL, upload_guide_matrices=True):
     """for each portal, save and upload profile-indexed data matrices
     
     Args:
@@ -526,9 +527,10 @@ def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME,
                     folder=folder+ "/",
                     change_desc="adding " + virtual,
                 )
-        uploadBinaryGuideMutationMatrixModel(
-            pr2model_dict, portal, taiga_virtual=virtual_ids[portal]
-        )
+        if upload_guide_matrices:
+            uploadBinaryGuideMutationMatrixModel(
+                pr2model_dict, portal, taiga_virtual=virtual_ids[portal]
+            )
 
 
 def findLatestVersion(dataset, approved_only=True):
