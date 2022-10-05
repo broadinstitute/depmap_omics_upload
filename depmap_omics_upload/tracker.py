@@ -75,7 +75,7 @@ class SampleTracker:
     def write_mc_table(self, df):
         # assumes df's columns are camelCase, and converts it back to snake_case
         df = df.reset_index(level=0)
-        df = self.mapping_utils.rename_columns(
+        self.mapping_utils.rename_columns(
             self.mc_table_name, df, convert_to_custom_names=False, inplace=True
         )
         self.client.update(self.mc_table_name, df)
@@ -84,7 +84,7 @@ class SampleTracker:
     def write_pr_table(self, df):
         # assumes df's columns are camelCase, and converts it back to snake_case
         df = df.reset_index(level=0)
-        df = self.mapping_utils.rename_columns(
+        self.mapping_utils.rename_columns(
             self.pr_table_name, df, convert_to_custom_names=False, inplace=True
         )
         self.client.update(self.pr_table_name, df)
@@ -92,11 +92,21 @@ class SampleTracker:
 
     def write_seq_table(self, df):
         # assumes df's columns are camelCase, and converts it back to snake_case
+        df.index.name = self.seq_table_index
         df = df.reset_index(level=0)
-        df = self.mapping_utils.rename_columns(
+        self.mapping_utils.rename_columns(
             self.seq_table_name, df, convert_to_custom_names=False, inplace=True
         )
         self.client.update(self.seq_table_name, df)
+        self.client.commit()
+    
+    def insert_to_seq_table(self, df):
+        df.index.name = self.seq_table_index
+        df = df.reset_index(level=0)
+        self.mapping_utils.rename_columns(
+            self.seq_table_name, df, convert_to_custom_names=False, inplace=True
+        )
+        self.client.insert_only(self.seq_table_name, df)
         self.client.commit()
 
     def get_participant_id(self, seqid, seq_table, pr_table, mc_table, model_table):
@@ -120,13 +130,26 @@ class SampleTracker:
             assert c in model_table.columns, c + " is not a column in model table"
         for seq_id in seq_table.index:
             pr = seq_table.loc[seq_id, self.pr_table_index]
-            mc = pr_table.loc[pr, "ModelCondition"]
-            model = mc_table.loc[mc, self.model_table_index]
-            for c in cols:
-                seq_table.loc[seq_id, c] = model_table[
-                    model_table[self.model_table_index] == model
-                ][c].values[0]
+            if pr is not None:
+                mc = pr_table.loc[pr, "ModelCondition"]
+                model = mc_table.loc[mc, self.model_table_index]
+                for c in cols:
+                    seq_table.loc[seq_id, c] = model_table[
+                        model_table[self.model_table_index] == model
+                    ][c].values[0]
+            else:
+                for c in cols:
+                    seq_table.loc[seq_id, c] = "nan"
         return seq_table
+
+    def lookup_model_from_pr(self, pr_id, model_col):
+        # given a profile ID, look for a column in the model table
+        pr_table = self.read_pr_table()
+        mc_table = self.read_mc_table()
+        model_table = self.read_model_table().reset_index(level=0)
+        mc = pr_table.loc[pr_id, "ModelCondition"]
+        model = mc_table.loc[mc, self.model_table_index]
+        return model_table[model_table[self.model_table_index] == model][model_col].values[0]
 
     def update_pr_from_seq(
         self,
