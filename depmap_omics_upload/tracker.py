@@ -163,6 +163,7 @@ class SampleTracker:
         dryrun=True,
     ):
         seq_table = self.read_seq_table()
+        seq_table = seq_table[seq_table.blacklist != True]
         pr_table = self.read_pr_table()
         prs_in_seq_table = seq_table.ProfileID.unique()
 
