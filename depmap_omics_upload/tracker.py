@@ -811,11 +811,11 @@ def update(
             for i in gcp.lsFiles(res[bamfilepaths[0]].tolist(), "-L")
         ]
 
-    table.loc[samplesinset, ["low_quality", "blacklist", "prioritized"]] = 0
-    table.loc[lowqual, "low_quality"] = 1
+    table.loc[samplesinset, ["low_quality", "blacklist", "prioritized"]] = False
+    table.loc[lowqual, "low_quality"] = True
     failed_not_dropped = list(set(failed) - set(todrop))
     # print(todrop)
-    table.loc[failed_not_dropped, "blacklist"] = 1
+    table.loc[failed_not_dropped, "blacklist"] = True
     mytracker = SampleTracker()
     if dry_run:
         return table
@@ -875,7 +875,6 @@ def updateTrackerRNA(
         tracker.loc[k, "processing_qc"] = str(v) + "," + a
         if tracker.loc[k, "bam_qc"] != v[0]:
             tracker.loc[k, "bam_qc"] = v[0]
-    tracker.loc[tracker[tracker.datatype.isin(["rna"])].index, samplesetname] = 0
     return update(
         tracker,
         selected,
