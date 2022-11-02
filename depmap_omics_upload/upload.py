@@ -14,7 +14,7 @@ def getPRToRelease(date_col_dict=DATE_COL_DICT):
     Returns:
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
-    today = str(date.today())
+    today = "2022-12-01"
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
     mytracker.close_gumbo_client()
@@ -24,8 +24,10 @@ def getPRToRelease(date_col_dict=DATE_COL_DICT):
         prs_with_date = pr_table[~(pr_table[v] == "")]
         prs[k] = prs_with_date[
             (prs_with_date[v] <= today)
-            & (prs_with_date.ProfileSource == "bam")
+            & (prs_with_date.ProfileSource != "taiga")
+            & (~prs_with_date.MainSequencingID.isnull())
         ].index.tolist()
+    assert (len(set(prs['dmc']) - set(prs['internal'])) == 0), "Lines with DMC release dates missing internal release dates: " + str(set(prs['dmc']) - set(prs['internal']))
     return prs
 
 
@@ -135,6 +137,7 @@ def makeDefaultModelTable(
     """
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
+    pr_table = pr_table[pr_table.BlacklistOmics != True]
     mc_table = mytracker.read_mc_table()
     seq_table = mytracker.read_seq_table()
     source_priority = {source_priority[i]: i for i in range(len(source_priority))}
@@ -219,6 +222,22 @@ def makeDefaultModelTable(
     default_table = pd.DataFrame(rows, columns=colnames)
     return default_table
 
+def makeProfileTable(prs, columns=PROFILE_TABLE_COLS):
+    """subset gumbo profile table both column- and row-wise for the release
+
+    Args:
+        prs (list): list of profile IDs to be released
+        columns (list, optional): list of columns to be included in the table
+
+    Returns:
+        pr_table (pd.DataFrame): a df containing omics profile information
+    """
+    mytracker = track.SampleTracker()
+    pr_table = mytracker.add_model_cols_to_prtable(["ModelID"])
+    pr_table = pr_table.loc[prs, columns]
+    pr_table = pr_table[pr_table["Datatype"].isin(["rna", "wgs", "wes", "SNParray"])]
+    mytracker.close_gumbo_client()
+    return pr_table
 
 def initVirtualDatasets(
     samplesetname, taiga_folder_id=VIRTUAL_FOLDER, portals=DATASETS
@@ -406,6 +425,7 @@ def uploadAuxTables(
     taiga_ids=VIRTUAL,
     ach_table_name=ACH_CHOICE_TABLE_NAME,
     default_table_name=DEFAULT_TABLE_NAME,
+    release_pr_table_name=RELEASE_PR_TABLE_NAME,
     folder=WORKING_DIR + SAMPLESETNAME + "/",
 ):
     """upload achilles choice and default model table to all portals
@@ -418,11 +438,15 @@ def uploadAuxTables(
     for portal, prs in prs_allportals.items():
         achilles_table = makeAchillesChoiceTable(prs)
         default_table = makeDefaultModelTable(prs)
+        profile_table = makeProfileTable(prs)
         achilles_table.to_csv(
             folder + portal + "_" + ach_table_name + ".csv", index=False
         )
         default_table.to_csv(
             folder + portal + "_" + default_table_name + ".csv", index=False
+        )
+        profile_table.to_csv(
+            folder + portal + "_" + release_pr_table_name + ".csv"
         )
         tc = TaigaClient()
         tc.update_dataset(
@@ -438,6 +462,12 @@ def uploadAuxTables(
                 {
                     "path": folder + "/" + portal + "_" + default_table_name + ".csv",
                     "name": "OmicsDefaultModelProfiles",
+                    "format": "TableCSV",
+                    "encoding": "utf-8",
+                },
+                {
+                    "path": folder + "/" + portal + "_" + release_pr_table_name + ".csv",
+                    "name": "OmicsProfiles",
                     "format": "TableCSV",
                     "encoding": "utf-8",
                 },

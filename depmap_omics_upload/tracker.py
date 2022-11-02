@@ -142,6 +142,27 @@ class SampleTracker:
                     seq_table.loc[seq_id, c] = "nan"
         return seq_table
 
+    def add_model_cols_to_prtable(self, cols=[]):
+        # add columns from model table to seq table
+        pr_table = self.read_pr_table()
+        pr_table = pr_table[~pr_table.ModelCondition.isnull()]
+        mc_table = self.read_mc_table()
+        model_table = self.read_model_table().reset_index(level=0)
+        for c in cols:
+            assert c in model_table.columns, c + " is not a column in model table"
+        for pr_id in pr_table.index:
+            if pr_id is not None:
+                mc = pr_table.loc[pr_id, "ModelCondition"]
+                model = mc_table.loc[mc, self.model_table_index]
+                for c in cols:
+                    pr_table.loc[pr_id, c] = model_table[
+                        model_table[self.model_table_index] == model
+                    ][c].values[0]
+            else:
+                for c in cols:
+                    pr_table.loc[pr_id, c] = "nan"
+        return pr_table
+
     def lookup_model_from_pr(self, pr_id, model_col):
         # given a profile ID, look for a column in the model table
         pr_table = self.read_pr_table()
@@ -153,6 +174,7 @@ class SampleTracker:
 
     def update_pr_from_seq(
         self,
+        datatype,
         cols={
             "bam_public_sra_path": "BamPublicSRAPath",
             "blacklist": "BlacklistOmics",
@@ -160,17 +182,17 @@ class SampleTracker:
             "prioritized": "Prioritized",
         },
         priority=None,
-        dryrun=True,
+        dryrun=False,
     ):
         seq_table = self.read_seq_table()
-        seq_table = seq_table[seq_table.blacklist != True]
+        seq_table = seq_table[(seq_table.blacklist != True) & (seq_table.expected_type.isin(datatype))]
         pr_table = self.read_pr_table()
         prs_in_seq_table = seq_table.ProfileID.unique()
 
         cds2pr_dict = {}
         for pr in prs_in_seq_table:
             if len(seq_table[seq_table.ProfileID == pr]) == 1:
-                pr_table.loc[pr, "CDSID"] = seq_table[seq_table.ProfileID == pr].index
+                pr_table.loc[pr, "MainSequencingID"] = seq_table[seq_table.ProfileID == pr].index
             else:
                 allv = seq_table[seq_table["ProfileID"] == pr]
                 for k, val in allv.iterrows():
@@ -185,7 +207,7 @@ class SampleTracker:
                             cds2pr_dict[k] = pr
                             break
         for k, v in cds2pr_dict.items():
-            pr_table.loc[v, "CDSID"] = k
+            pr_table.loc[v, "MainSequencingID"] = k
         if not dryrun:
             self.write_pr_table(pr_table)
         return pr_table
@@ -752,14 +774,13 @@ def findLikelyDup(
 
 def update(
     table,
-    selected,
     samplesetname,
     failed,
     lowqual,
     newgs="",
     refworkspace=None,
     bamfilepaths=["internal_bam_filepath", "internal_bai_filepath"],
-    dry_run=True,
+    dry_run=False,
     samplesinset=[],
     todrop=[],
 ):
@@ -786,7 +807,7 @@ def update(
                 .loc[samplesetname]
                 .samples
             ]
-        res, _ = terra.changeGSlocation(
+        res, _, _ = terra.changeGSlocation(
             refworkspace,
             newgs=newgs,
             bamfilepaths=bamfilepaths,
@@ -799,7 +820,7 @@ def update(
         table.loc[res.index.tolist()][
             ["legacy_size", "legacy_crc32c_hash"]
         ] = table.loc[res.index.tolist()][["size", "crc32c_hash"]].values
-        table.loc[res.index.tolist(), HG38BAMCOL] = res[bamfilepaths[:2]].values
+        table.loc[res.index.tolist(), ["bam_filepath", "bai_filepath"]] = res[bamfilepaths[:2]].values
         table.loc[res.index.tolist(), "size"] = [
             gcp.extractSize(i)[1]
             for i in gcp.lsFiles(res[bamfilepaths[0]].tolist(), "-l")
@@ -815,19 +836,18 @@ def update(
     table.loc[samplesinset, ["low_quality", "blacklist", "prioritized"]] = False
     table.loc[lowqual, "low_quality"] = True
     failed_not_dropped = list(set(failed) - set(todrop))
-    # print(todrop)
     table.loc[failed_not_dropped, "blacklist"] = True
-    mytracker = SampleTracker()
     if dry_run:
         return table
     else:
+        mytracker = SampleTracker()
         mytracker.write_seq_table(table)
-    print("updated the sheet, please reactivate protections")
-    return None
+        mytracker.close_gumbo_client()
+        print("updated gumbo")
+        return None
 
 
 def updateTrackerRNA(
-    selected,
     failed,
     lowqual,
     tracker,
@@ -861,24 +881,25 @@ def updateTrackerRNA(
         starlogs (dict(str:list[str]), optional): dict of samples' star qc log locations when refworkspace is None (bypass interacting with terra)
     """
     refwm = dm.WorkspaceManager(refworkspace)
-    samplesinset = [
-        i["entityName"]
-        for i in refwm.get_entities("sample_set").loc[samplesetname].samples
-    ]
-    starlogs = myterra.getQC(
-        workspace=refworkspace, only=samplesinset, qcname=qcname, match=match
-    )
+    if samplesinset == []:
+        samplesinset = [
+            i["entityName"]
+            for i in refwm.get_entities("sample_set").loc[samplesetname].samples
+        ]
+    if starlogs == {}:
+        starlogs = myterra.getQC(
+            workspace=refworkspace, only=samplesinset, qcname=qcname, match=match
+        )
     for k, v in starlogs.items():
         if k == "nan":
             continue
         a = tracker.loc[k, "processing_qc"]
-        a = "" if a is np.nan else a
+        a = "" if a is None else a
         tracker.loc[k, "processing_qc"] = str(v) + "," + a
         if tracker.loc[k, "bam_qc"] != v[0]:
             tracker.loc[k, "bam_qc"] = v[0]
     return update(
         tracker,
-        selected,
         samplesetname,
         failed,
         lowqual,
@@ -892,7 +913,6 @@ def updateTrackerRNA(
 
 def updateTrackerWGS(
     tracker,
-    selected,
     samplesetname,
     lowqual,
     datatype,
@@ -945,20 +965,18 @@ def updateTrackerWGS(
             if k == "nan":
                 continue
             a = tracker.loc[k, "processing_qc"]
-            a = "" if a is np.nan else a
+            a = "" if a is None else a
             tracker.loc[k, "processing_qc"] = str(v) + "," + a
         for k, v in dataBam.items():
             if k == "nan":
                 continue
             a = tracker.loc[k, "bam_qc"]
-            a = "" if a is np.nan else a
+            a = "" if a is None else a
             tracker.loc[k, "bam_qc"] = str(v) + "," + a
     if type(datatype) is str:
         datatype = [datatype]
-    tracker.loc[tracker[tracker.datatype.isin(datatype)].index, samplesetname] = 0
     update(
         tracker,
-        selected,
         samplesetname,
         lowqual,
         lowqual,

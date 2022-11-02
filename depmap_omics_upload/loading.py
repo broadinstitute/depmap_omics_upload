@@ -118,12 +118,12 @@ def loadFromTerraWorkspace(
         + " bam file path do not exist: "
         + str(broken_bams)
     )
-    samples = samples_in_ws[(~samples_in_ws[extract["bam"]].isin(broken_bams))]
+    samples = samples_in_ws[(~samples_in_ws[bamcol].isin(broken_bams))]
 
     print(
         "extracting information from workspace including hash, size, update time, etc."
     )
-    samples = extractFromWorkspace(samples, stype)
+    samples = extractFromWorkspace(samples, stype, bamcol)
     print("generating CDS-ids, annotating source, and renaming columns")
     samples = mapSamples(samples, source, extract=extract)
     print("checking for duplicates in the workspace by comparing file sizes")
@@ -145,14 +145,15 @@ def loadFromTerraWorkspace(
     # init profile id column
     samples[extract["profile_id"]] = ""
     samples[extract["version"]] = 1
+    samples[extract["expected_type"]] = stype
     # FOR NOW, assume the id col to map by is in profile table (might change??)
     for k, v in samples.iterrows():
-        if (not pd.isnull(v[wsidcol])) and v[wsidcol] in pr_table[gumboidcol].tolist():
+        if (not pd.isnull(v[wsidcol])) and v[wsidcol] in pr_table[pr_table.Datatype == stype][gumboidcol].tolist():
             # different datatypes from the same line might share the same SM-ID
             # so mapping should condition on datatype as well
             pr_id = pr_table[
                 (pr_table[gumboidcol] == v[wsidcol]) & (pr_table.Datatype == stype)
-            ].index
+            ].index.tolist()
             if len(pr_id) > 1:
                 raise ValueError(
                     "multiple profile ids mapped to the same validation id. check with ops!"
@@ -229,6 +230,7 @@ def deleteClosest(
 def extractFromWorkspace(
     samples,
     stype,
+    bamcol="cram_or_bam_path",
     recomputeTime=True,
     recomputesize=True,
     recomputedate=True,
@@ -262,27 +264,27 @@ def extractFromWorkspace(
     if extract["legacy_hash"] not in samples.columns or recompute_hash:
         samples[extract["hash"]] = [
             gcp.extractHash(val)
-            for val in gcp.lsFiles(samples[extract["bam"]].tolist(), "-L", 200)
+            for val in gcp.lsFiles(samples[bamcol].tolist(), "-L", 200)
         ]
-    lis = gcp.lsFiles(samples[extract["bam"]].tolist(), "-al", 200)
+    lis = gcp.lsFiles(samples[bamcol].tolist(), "-al", 200)
     if extract["legacy_size"] not in samples.columns or recomputesize:
         samples[extract["legacy_size"]] = [gcp.extractSize(i)[1] for i in lis]
     if extract["update_time"] not in samples.columns or recomputeTime:
         samples[extract["update_time"]] = [gcp.extractTime(i) for i in lis]
     todrop = []
-    for k, val in samples.iterrows():
-        if val[extract["legacy_size"]] < MINSIZES[stype]:
-            todrop.append(k)
-            print(
-                "too small size, removing sample: "
-                + str(val[extract["from_arxspan_id"]])
-            )
+    # for k, val in samples.iterrows():
+    #     if val[extract["legacy_size"]] < MINSIZES[stype]:
+    #         todrop.append(k)
+    #         print(
+    #             "too small size, removing sample: "
+    #             + str(val[extract["root_sample_id"]])
+    #         )
     samples = samples.drop(index=todrop)
     # getting the date released
     if len(samples) == 0:
         return None
     if extract["release_date"] not in samples.columns or recomputedate:
-        samples[extract["release_date"]] = seq.getBamDate(samples[extract["bam"]])
+        samples[extract["release_date"]] = seq.getBamDate(samples[bamcol])
     return samples
 
 
@@ -321,7 +323,9 @@ def mapSamples(samples, source, extract={}):
             extract["bam"]: extract["ref_bam"],
             extract["bai"]: extract["ref_bai"],
             extract["root_sample_id"]: extract["sm_id"],
-            extract["PDO_id_terra"]: extract["PDO_id_gumbo"],
+            # extract["PDO_id_terra"]: extract["PDO_id_gumbo"],
+            "cram_path": extract["ref_bam"],
+            "crai_path": extract["ref_bai"],
         }
     ).set_index(extract["ref_id"], drop=True)
     # subsetting
@@ -334,7 +338,7 @@ def mapSamples(samples, source, extract={}):
                     extract["ref_bai"],
                     extract["release_date"],
                     extract["legacy_size"],
-                    extract["PDO_id_gumbo"],
+                    # extract["PDO_id_gumbo"],
                     extract["sm_id"],
                     extract["update_time"],
                     extract["source"],
@@ -497,6 +501,7 @@ def addSamplesToGumbo(
     name_col="index",
     values=["hg19_bam_filepath", "hg19_bai_filepath"],
     filetypes=["bam", "bai"],
+    dryrun=False,
 ):
     """update the samples on gumbo's sequencing sheet
 
@@ -510,21 +515,21 @@ def addSamplesToGumbo(
     """
     # uploading to our bucket (now a new function)
     assert set(values).issubset(set(samples.columns))
-    samples = terra.changeToBucket(
+    samples, cmds = terra.changeToBucket(
         samples,
         bucket,
         name_col=name_col,
         values=values,
         filetypes=filetypes,
         catchdup=True,
-        dryrun=False,
+        dryrun=dryrun,
     )
 
     mytracker = track.SampleTracker()
     ccle_refsamples = mytracker.read_seq_table()
 
     names = []
-    subccle_refsamples = ccle_refsamples[ccle_refsamples["ExpectedType"] == stype]
+    subccle_refsamples = ccle_refsamples[ccle_refsamples["expected_type"] == stype]
     for k, val in samples.iterrows():
         val = val["ProfileID"]
         if val != "":
@@ -534,8 +539,12 @@ def addSamplesToGumbo(
             ) + names.count(val)
     samples["version"] = samples["version"].astype(int)
 
-    ccle_refsamples = ccle_refsamples.append(samples, sort=False)
-    mytracker.write_seq_table(ccle_refsamples)
+    if not dryrun:
+        print("inserting new samples to gumbo sequencing table")
+        mytracker.insert_to_seq_table(samples)
+    mytracker.client.close()
+
+    return samples, cmds
 
 
 def addSamplesToDepMapWorkspace(
@@ -546,7 +555,8 @@ def addSamplesToDepMapWorkspace(
     model_cols_to_add=[
         "PatientID",
         "ModelID",
-    ],  # TODO: add stripped cell line name after it's populated on model table in gumbo
+        "StrippedCellLineName"
+    ],
 ):
     """update the samples on a depmapomics terra processing workspace
 
@@ -561,11 +571,14 @@ def addSamplesToDepMapWorkspace(
 
     terra_samples = refwm.get_samples()
     seq_table = mytracker.add_model_cols_to_seqtable(cols=model_cols_to_add)
+    
     # terra requires a participant_id column
-    seq_table = seq_table.rename(columns={"PatientID": "participant_id"})
+    seq_table = seq_table.rename(columns={"PatientID": "participant_id", "ModelID": "arxspan_id", "StrippedCellLineName": "stripped_cell_line_name"})
+    seq_table['participant_id'] = seq_table['participant_id'].fillna("nan")
+    
     # check which lines are new and need to be imported to terra
     samples_to_add = seq_table[
-        (~seq_table.index.isin(terra_samples.index)) & (seq_table.ExpectedType == stype)
+        (~seq_table.index.isin(terra_samples.index)) & (seq_table.expected_type == stype)
     ]
     print("found " + str(len(samples_to_add)) + " new samples to import!")
 
