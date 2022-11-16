@@ -8,25 +8,27 @@ from depmapomics.config import *
 from taigapy import TaigaClient
 
 
-def getPRToRelease(date_col_dict=DATE_COL_DICT):
+def getPRToRelease(today=None, portals=DATASETS, date_col_dict=DATE_COL_DICT):
     """generate lists of profiles to release based on date for all portals
 
     Returns:
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
-    today = "2022-12-01"
+    if today == None:
+        today = date.today()
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
     mytracker.close_gumbo_client()
     pr_table = pr_table[pr_table.BlacklistOmics != True]
     prs = dict()
     for k, v in date_col_dict.items():
-        prs_with_date = pr_table[~(pr_table[v] == "")]
-        prs[k] = prs_with_date[
-            (prs_with_date[v] <= today)
-            & (prs_with_date.ProfileSource != "taiga")
-            & (~prs_with_date.MainSequencingID.isnull())
-        ].index.tolist()
+        prs_with_date = pr_table[~(pr_table[v].isnull())]
+        if k in portals:
+            prs[k] = prs_with_date[
+                (prs_with_date[v] <= today)
+                & (prs_with_date.ProfileSource != "taiga")
+                & (~prs_with_date.MainSequencingID.isnull())
+            ].index.tolist()
     assert (len(set(prs['dmc']) - set(prs['internal'])) == 0), "Lines with DMC release dates missing internal release dates: " + str(set(prs['dmc']) - set(prs['internal']))
     return prs
 
@@ -427,6 +429,7 @@ def uploadAuxTables(
     default_table_name=DEFAULT_TABLE_NAME,
     release_pr_table_name=RELEASE_PR_TABLE_NAME,
     folder=WORKING_DIR + SAMPLESETNAME + "/",
+    today=None,
 ):
     """upload achilles choice and default model table to all portals
     Args:
@@ -434,7 +437,7 @@ def uploadAuxTables(
         taiga_ids (dict, optional): dict mapping portal name to taiga virtual dataset id
         folder (str, optional): where the tables are saved
     """
-    prs_allportals = getPRToRelease()
+    prs_allportals = getPRToRelease(portals=taiga_ids.keys(), today=today)
     for portal, prs in prs_allportals.items():
         achilles_table = makeAchillesChoiceTable(prs)
         default_table = makeDefaultModelTable(prs)
@@ -476,7 +479,7 @@ def uploadAuxTables(
         )
 
 
-def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, folder=WORKING_DIR + SAMPLESETNAME, files_table=LATEST2FN_TABLE_PR):
+def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, folder=WORKING_DIR + SAMPLESETNAME, files_table=LATEST2FN_TABLE_PR, today=None):
     """for each portal, save and upload profile-indexed data matrices
     
     Args:
@@ -485,7 +488,7 @@ def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, fold
     Returns:
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
-    prs_allportals = getPRToRelease()
+    prs_allportals = getPRToRelease(portals=virtual_ids.keys(), today=today)
     for portal, prs_to_release in prs_allportals.items():
         print("uploading profile-level matrices to ", portal)
         for latest_id, fn_dict in files_nummat.items():
@@ -516,7 +519,7 @@ def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, fold
                 )
 
 
-def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME, files_nummat=LATEST2FN_NUMMAT_MODEL, files_table=LATEST2FN_TABLE_MODEL, upload_guide_matrices=True):
+def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME, files_nummat=LATEST2FN_NUMMAT_MODEL, files_table=LATEST2FN_TABLE_MODEL, upload_guide_matrices=True, today=None):
     """for each portal, save and upload profile-indexed data matrices
     
     Args:
@@ -525,7 +528,7 @@ def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME,
     Returns:
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
-    prs_allportals = getPRToRelease()
+    prs_allportals = getPRToRelease(portals=virtual_ids.keys(), today=today)
     for portal, prs_to_release in prs_allportals.items():
         default_table = makeDefaultModelTable(prs_to_release)
         pr2model_dict = dict(list(zip(default_table.ProfileID, default_table.ModelID)))
