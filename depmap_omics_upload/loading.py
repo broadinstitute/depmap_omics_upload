@@ -49,16 +49,18 @@ def loadFromMultipleWorkspaces(
     """
     samples = []
     unmapped_samples = []
-    for s, wsname in wsnames:
+    for s, wsname, ftype in wsnames:
         print("loading " + stype + " samples from terra workspace: " + wsname)
+        bamcol = "cram_or_bam_path" if ftype == "bam" else "cram_path"
         samples_per_ws, unmapped = loadFromTerraWorkspace(
             wsname,
             wsidcol,
             gumboidcol,
             s,
             stype,
-            only_load_mapped,
+            ftype,
             bamcol,
+            only_load_mapped,
             load_undefined,
             extract,
             accept_unknowntypes,
@@ -75,8 +77,9 @@ def loadFromTerraWorkspace(
     gumboidcol,
     source,
     stype,
+    ftype,
+    bamcol,
     only_load_mapped=False,
-    bamcol="cram_or_bam_path",
     load_undefined=False,
     extract=EXTRACT_DEFAULTS,
     accept_unknowntypes=True,
@@ -93,6 +96,7 @@ def loadFromTerraWorkspace(
         gumboidcol (str): name of column in gumbo's profile table that contains IDs to map to ProfileIDs by
         source (str): source of the data delivered (DEPMAP, IBM, etc.)
         stype (str): type of the data (wgs, rna, etc.)
+        ftype (str): type of the sequenced file (bam/cram)
         extract: if you want to specify what values should refer to which column names
         dict{
         'name':
@@ -123,14 +127,15 @@ def loadFromTerraWorkspace(
     print(
         "extracting information from workspace including hash, size, update time, etc."
     )
-    samples = extractFromWorkspace(samples, stype, bamcol)
+    samples = extractFromWorkspace(samples, stype, ftype, bamcol)
     print("generating CDS-ids, annotating source, and renaming columns")
-    samples = mapSamples(samples, source, extract=extract)
+    samples = mapSamples(samples, source, ftype, extract=extract)
     print("checking for duplicates in the workspace by comparing file sizes")
     samples = resolveFromWorkspace(
         samples,
         seq_table[seq_table[extract["expected_type"]] == stype],
         wsidcol,
+        ftype,
         accept_unknowntypes,
         addonly,
         extract,
@@ -230,7 +235,8 @@ def deleteClosest(
 def extractFromWorkspace(
     samples,
     stype,
-    bamcol="cram_or_bam_path",
+    ftype,
+    bamcol,
     recomputeTime=True,
     recomputesize=True,
     recomputedate=True,
@@ -272,13 +278,21 @@ def extractFromWorkspace(
     if extract["update_time"] not in samples.columns or recomputeTime:
         samples[extract["update_time"]] = [gcp.extractTime(i) for i in lis]
     todrop = []
-    # for k, val in samples.iterrows():
-    #     if val[extract["legacy_size"]] < MINSIZES[stype]:
-    #         todrop.append(k)
-    #         print(
-    #             "too small size, removing sample: "
-    #             + str(val[extract["root_sample_id"]])
-    #         )
+    for k, val in samples.iterrows():
+        if ftype == "bam":
+            if val[extract["legacy_size"]] < MINSIZES_BAM[stype]:
+                todrop.append(k)
+                print(
+                    "too small size, removing sample: "
+                    + str(val[extract["root_sample_id"]])
+                )
+        elif ftype == "cram":
+            if val[extract["legacy_size"]] < MINSIZES_CRAM[stype]:
+                todrop.append(k)
+                print(
+                    "too small size, removing sample: "
+                    + str(val[extract["root_sample_id"]])
+                )
     samples = samples.drop(index=todrop)
     # getting the date released
     if len(samples) == 0:
@@ -288,7 +302,7 @@ def extractFromWorkspace(
     return samples
 
 
-def mapSamples(samples, source, extract={}):
+def mapSamples(samples, source, ftype, extract={}):
     """
     Convert samples from a list of GP workspaces to something being able to be merged with the sample tracker
 
@@ -324,33 +338,50 @@ def mapSamples(samples, source, extract={}):
             extract["bai"]: extract["ref_bai"],
             extract["root_sample_id"]: extract["sm_id"],
             # extract["PDO_id_terra"]: extract["PDO_id_gumbo"],
-            "cram_path": extract["ref_bam"],
-            "crai_path": extract["ref_bai"],
+            extract["cram"]: extract["ref_cram"],
+            extract["crai"]: extract["ref_crai"],
         }
     ).set_index(extract["ref_id"], drop=True)
     # subsetting
-    print(samples.columns)
-    samples = samples[
-        list(
-            set(
-                [
-                    extract["ref_bam"],
-                    extract["ref_bai"],
-                    extract["release_date"],
-                    extract["legacy_size"],
-                    # extract["PDO_id_gumbo"],
-                    extract["sm_id"],
-                    extract["update_time"],
-                    extract["source"],
-                ]
+    if ftype == "bam":
+        samples = samples[
+            list(
+                set(
+                    [
+                        extract["ref_bam"],
+                        extract["ref_bai"],
+                        extract["release_date"],
+                        extract["legacy_size"],
+                        # extract["PDO_id_gumbo"],
+                        extract["sm_id"],
+                        extract["update_time"],
+                        extract["source"],
+                    ]
+                )
             )
-        )
-    ]
+        ]
+    else:
+        samples = samples[
+            list(
+                set(
+                    [
+                        extract["ref_cram"],
+                        extract["ref_crai"],
+                        extract["release_date"],
+                        extract["legacy_size"],
+                        # extract["PDO_id_gumbo"],
+                        extract["sm_id"],
+                        extract["update_time"],
+                        extract["source"],
+                    ]
+                )
+            )
+        ]
     return samples
 
 
 def resolveFromWorkspace(
-    samples, refsamples, wsidcol, accept_unknowntypes=True, addonly=[], extract={},
+    samples, refsamples, wsidcol, ftype, accept_unknowntypes=True, addonly=[], extract={},
 ):
     """
     Filters our list by trying to find duplicate in our dataset and remove any sample that isn't tumor
@@ -377,10 +408,16 @@ def resolveFromWorkspace(
     """
     extract.update(EXTRACT_DEFAULTS)
 
-    sample_size = {
-        gcp.extractSize(val)[1]: gcp.extractSize(val)[0]
-        for val in gcp.lsFiles(samples[extract["ref_bam"]].tolist(), "-la")
-    }
+    if ftype == "bam":
+        sample_size = {
+            gcp.extractSize(val)[1]: gcp.extractSize(val)[0]
+            for val in gcp.lsFiles(samples[extract["ref_bam"]].tolist(), "-la")
+        }
+    else:
+        sample_size = {
+            gcp.extractSize(val)[1]: gcp.extractSize(val)[0]
+            for val in gcp.lsFiles(samples[extract["ref_cram"]].tolist(), "-la")
+        }
     dups_to_remove = [
         sample_size[a]
         for a in set(sample_size.keys()) & set(refsamples[extract["legacy_size"]])
@@ -394,7 +431,10 @@ def resolveFromWorkspace(
         + str(dups_to_remove)
     )
     # remove the samples with broken bam filepaths from consideration
-    samples = samples[~samples[extract["ref_bam"]].isin(dups_to_remove)]
+    if ftype == "bam":
+        samples = samples[~samples[extract["ref_bam"]].isin(dups_to_remove)]
+    else:
+        samples = samples[~samples[extract["ref_cram"]].isin(dups_to_remove)]
 
     print("Len of samples after removal: " + str(len(samples)))
     if len(samples) == 0:
