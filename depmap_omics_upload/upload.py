@@ -357,6 +357,7 @@ def uploadModelMatrix(
         subset_mat = to_subset[
             to_subset[pr_col].isin(set(pr2model_dict.keys()))
         ].replace({SAMPLEID: pr2model_dict})
+        subset_mat = subset_mat.rename(columns={SAMPLEID: "ModelID"})
         subset_mat.to_csv(folder + virtual_fn + ".csv", index=False)
 
     print("uploading ", virtual_fn, " to virtual")
