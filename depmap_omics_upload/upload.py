@@ -24,6 +24,11 @@ def getPRToRelease(today=None, portals=DATASETS, date_col_dict=DATE_COL_DICT):
     for k, v in date_col_dict.items():
         prs_with_date = pr_table[~(pr_table[v].isnull())]
         if k in portals:
+            prs_to_release = prs_with_date[(prs_with_date[v] <= today) & (prs_with_date.ProfileSource != "taiga")]
+            if prs_to_release.MainSequencingID.isnull().values.any():
+                raise Exception("No main SequencingID associated with the following profiles:" + 
+                    str(set(prs_to_release[prs_to_release.MainSequencingID.isnull()].index)) + 
+                    ". Contact Ops to update release dates")
             prs[k] = prs_with_date[
                 (prs_with_date[v] <= today)
                 & (prs_with_date.ProfileSource != "taiga")
@@ -31,6 +36,41 @@ def getPRToRelease(today=None, portals=DATASETS, date_col_dict=DATE_COL_DICT):
             ].index.tolist()
     assert (len(set(prs['dmc']) - set(prs['internal'])) == 0), "Lines with DMC release dates missing internal release dates: " + str(set(prs['dmc']) - set(prs['internal']))
     return prs
+
+def checkDataAvailability(
+    today=None, 
+    bamonly=True,
+    exptaigaid=TAIGA_EXPRESSION, 
+    exptaigafn="proteinCoding_genes_tpm_logp1_profile", 
+    cntaigaid=TAIGA_CN, 
+    cntaigafn="merged_gene_cn_profile"
+):
+    """confirm that all profiles that are part of the release actually have
+    valid data. If not, notify ops so they can update release dates accordingly.
+
+    we only need to check internal PRs because it should be a superset of all portals
+    
+    """
+    tc = TaigaClient()
+    prs = getPRToRelease(today=today)
+    mytracker = track.SampleTracker()
+    pr_table = mytracker.read_pr_table()
+    mytracker.close_gumbo_client()
+    all_rna_prs = set(pr_table[pr_table.Datatype == "rna"].index)
+    all_dna_prs = set(pr_table[pr_table.Datatype.isin(["wgs", "wes"])].index)
+
+    exp = tc.get(name=exptaigaid, file=exptaigafn)
+    exp_prs_avail = set(exp.index)
+    cn = tc.get(name=cntaigaid, file=cntaigafn)
+    cn_prs_avail = set(cn.index)
+    unavail_rna = set(prs["internal"]).intersection(all_rna_prs) - exp_prs_avail
+    unavail_dna = set(prs["internal"]).intersection(all_dna_prs) - cn_prs_avail
+    
+    print("No data available for the following RNAseq profiles: ", unavail_rna)
+    print("No data available for the following WES/WGS profiles: ", unavail_dna)
+    
+    assert(len(unavail_rna) == 0), "missing data in omics latest datasets for profiles above"
+    assert(len(unavail_dna) == 0), "missing data in omics latest datasets for profiles above"
 
 
 def makeAchillesChoiceTable(
