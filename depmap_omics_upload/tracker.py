@@ -22,7 +22,7 @@ class SampleTracker:
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self):
+    def __init__(self, gumbo_env="production"):
         self.model_table_name = MODEL_TABLE_NAME
         self.mc_table_name = MC_TABLE_NAME
         self.pr_table_name = PR_TABLE_NAME
@@ -32,10 +32,11 @@ class SampleTracker:
         self.pr_table_index = PR_TABLE_INDEX
         self.seq_table_index = SEQ_TABLE_INDEX
         self.sample_table_name = SAMPLE_TABLE_NAME
-        # hard-coded for now, waiting for independent staging envs to be enabled
-        self.client = gumbo_client.Client(config_dir="~/.config/gumbo-staging", username=GUMBO_CLIENT_USERNAME)
         # prod env for gumbo
-        # self.client = gumbo_client.Client(username=GUMBO_CLIENT_USERNAME)
+        self.client = gumbo_client.Client(username=GUMBO_CLIENT_USERNAME)
+        if gumbo_env == "staging":
+            # hard-coded for now, waiting for independent staging envs to be enabled
+            self.client = gumbo_client.Client(config_dir="~/.config/gumbo-staging", username=GUMBO_CLIENT_USERNAME)
         self.mapping_utils = gumbo_utils.NameMappingUtils()
 
     def commit_gumbo(self):
@@ -120,7 +121,7 @@ class SampleTracker:
         else:
             return "NA"
 
-    def add_model_cols_to_seqtable(self, cols=[]):
+    def add_model_cols_to_seqtable(self, cols=["ModelID"]):
         # add columns from model table to seq table
         seq_table = self.read_seq_table()
         pr_table = self.read_pr_table()
@@ -142,7 +143,7 @@ class SampleTracker:
                     seq_table.loc[seq_id, c] = "nan"
         return seq_table
 
-    def add_model_cols_to_prtable(self, cols=[]):
+    def add_model_cols_to_prtable(self, cols=["ModelID"]):
         # add columns from model table to seq table
         pr_table = self.read_pr_table()
         pr_table = pr_table[~pr_table.ModelCondition.isnull()]
