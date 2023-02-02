@@ -37,9 +37,25 @@ def getPRToRelease(today=None, portals=DATASETS, date_col_dict=DATE_COL_DICT):
     assert (len(set(prs['dmc']) - set(prs['internal'])) == 0), "Lines with DMC release dates missing internal release dates: " + str(set(prs['dmc']) - set(prs['internal']))
     return prs
 
+def checkDataPermission(today=None, datecol=DATE_COL_DICT["internal"]):
+    """confirm that all profiles slated as part of the release all have
+    permission to release on the model level
+    
+    should be part of gumbo's sanity check but we should run it to be extra safe.
+    
+    doesn't rely on availability of data so can be run at any point."""
+    mytracker = track.SampleTracker()
+    pr_table = mytracker.add_model_cols_to_prtable(cols=["ModelID", "PermissionToRelease"])
+    mytracker.close_gumbo_client()
+    problematic_prs = pr_table[~(pr_table[datecol].isnull()) & (~pr_table["PermissionToRelease"])]
+    if len(problematic_prs) > 0:
+        raise Exception("The following profiles do not have permission to release: " + str(set(problematic_prs.index)) +
+            "The corresponding ModelIDs are: " + str(set(problematic_prs.ModelID)))
+
+
+
 def checkDataAvailability(
-    today=None, 
-    bamonly=True,
+    today=None,
     exptaigaid=TAIGA_EXPRESSION, 
     exptaigafn="proteinCoding_genes_tpm_logp1_profile", 
     cntaigaid=TAIGA_CN, 
@@ -48,7 +64,9 @@ def checkDataAvailability(
     """confirm that all profiles that are part of the release actually have
     valid data. If not, notify ops so they can update release dates accordingly.
 
-    we only need to check internal PRs because it should be a superset of all portals
+    we only need to check internal PRs because it should be a superset of all portals.
+
+    should be run after data generation for the corresponding release.
     
     """
     tc = TaigaClient()
