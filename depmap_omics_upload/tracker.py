@@ -2,7 +2,7 @@
 from genepy.utils import helper as h
 import numpy as np
 import os
-from gsheets import Sheets
+
 from depmapomics.config import *
 from depmapomics import terra as myterra
 from genepy import terra
