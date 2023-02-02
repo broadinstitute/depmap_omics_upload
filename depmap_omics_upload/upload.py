@@ -24,42 +24,64 @@ def getPRToRelease(today=None, portals=DATASETS, date_col_dict=DATE_COL_DICT):
     for k, v in date_col_dict.items():
         prs_with_date = pr_table[~(pr_table[v].isnull())]
         if k in portals:
-            prs_to_release = prs_with_date[(prs_with_date[v] <= today) & (prs_with_date.ProfileSource != "taiga")]
+            prs_to_release = prs_with_date[
+                (prs_with_date[v] <= today) & (prs_with_date.ProfileSource != "taiga")
+            ]
             if prs_to_release.MainSequencingID.isnull().values.any():
-                raise Exception("No main SequencingID associated with the following profiles:" + 
-                    str(set(prs_to_release[prs_to_release.MainSequencingID.isnull()].index)) + 
-                    ". Contact Ops to update release dates")
+                raise Exception(
+                    "No main SequencingID associated with the following profiles:"
+                    + str(
+                        set(
+                            prs_to_release[
+                                prs_to_release.MainSequencingID.isnull()
+                            ].index
+                        )
+                    )
+                    + ". Contact Ops to update release dates"
+                )
             prs[k] = prs_with_date[
                 (prs_with_date[v] <= today)
                 & (prs_with_date.ProfileSource != "taiga")
                 & (~prs_with_date.MainSequencingID.isnull())
             ].index.tolist()
-    assert (len(set(prs['dmc']) - set(prs['internal'])) == 0), "Lines with DMC release dates missing internal release dates: " + str(set(prs['dmc']) - set(prs['internal']))
+    assert (
+        len(set(prs["dmc"]) - set(prs["internal"])) == 0
+    ), "Lines with DMC release dates missing internal release dates: " + str(
+        set(prs["dmc"]) - set(prs["internal"])
+    )
     return prs
+
 
 def checkDataPermission(today=None, datecol=DATE_COL_DICT["internal"]):
     """confirm that all profiles slated as part of the release all have
     permission to release on the model level
-    
+
     should be part of gumbo's sanity check but we should run it to be extra safe.
-    
+
     doesn't rely on availability of data so can be run at any point."""
     mytracker = track.SampleTracker()
-    pr_table = mytracker.add_model_cols_to_prtable(cols=["ModelID", "PermissionToRelease"])
+    pr_table = mytracker.add_model_cols_to_prtable(
+        cols=["ModelID", "PermissionToRelease"]
+    )
     mytracker.close_gumbo_client()
-    problematic_prs = pr_table[~(pr_table[datecol].isnull()) & (~pr_table["PermissionToRelease"])]
+    problematic_prs = pr_table[
+        ~(pr_table[datecol].isnull()) & (~pr_table["PermissionToRelease"])
+    ]
     if len(problematic_prs) > 0:
-        raise Exception("The following profiles do not have permission to release: " + str(set(problematic_prs.index)) +
-            "The corresponding ModelIDs are: " + str(set(problematic_prs.ModelID)))
-
+        raise Exception(
+            "The following profiles do not have permission to release: "
+            + str(set(problematic_prs.index))
+            + "The corresponding ModelIDs are: "
+            + str(set(problematic_prs.ModelID))
+        )
 
 
 def checkDataAvailability(
     today=None,
-    exptaigaid=TAIGA_EXPRESSION, 
-    exptaigafn="proteinCoding_genes_tpm_logp1_profile", 
-    cntaigaid=TAIGA_CN, 
-    cntaigafn="merged_gene_cn_profile"
+    exptaigaid=TAIGA_EXPRESSION,
+    exptaigafn="proteinCoding_genes_tpm_logp1_profile",
+    cntaigaid=TAIGA_CN,
+    cntaigafn="merged_gene_cn_profile",
 ):
     """confirm that all profiles that are part of the release actually have
     valid data. If not, notify ops so they can update release dates accordingly.
@@ -67,7 +89,7 @@ def checkDataAvailability(
     we only need to check internal PRs because it should be a superset of all portals.
 
     should be run after data generation for the corresponding release.
-    
+
     """
     tc = TaigaClient()
     prs = getPRToRelease(today=today)
@@ -83,16 +105,22 @@ def checkDataAvailability(
     cn_prs_avail = set(cn.index)
     unavail_rna = set(prs["internal"]).intersection(all_rna_prs) - exp_prs_avail
     unavail_dna = set(prs["internal"]).intersection(all_dna_prs) - cn_prs_avail
-    
+
     print("No data available for the following RNAseq profiles: ", unavail_rna)
     print("No data available for the following WES/WGS profiles: ", unavail_dna)
-    
-    assert(len(unavail_rna) == 0), "missing data in omics latest datasets for profiles above"
-    assert(len(unavail_dna) == 0), "missing data in omics latest datasets for profiles above"
+
+    assert (
+        len(unavail_rna) == 0
+    ), "missing data in omics latest datasets for profiles above"
+    assert (
+        len(unavail_dna) == 0
+    ), "missing data in omics latest datasets for profiles above"
 
 
 def makeAchillesChoiceTable(
-    prs, source_priority=SOURCE_PRIORITY, colnames=ACH_CHOICE_TABLE_COLS,
+    prs,
+    source_priority=SOURCE_PRIORITY,
+    colnames=ACH_CHOICE_TABLE_COLS,
 ):
     """generate a table for each portal that indicates which profiles are released corresponding to which MC
 
@@ -129,7 +157,9 @@ def makeAchillesChoiceTable(
             subset_seq_table = seq_table[seq_table.index.isin(cds_ids)]
             subset_seq_table.source = subset_seq_table.source.replace(source_priority)
             latest_cds_id = subset_seq_table.loc[cds_ids, "source"].idxmin()
-            pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id].index[0]
+            pr = subset_pr_table[
+                subset_pr_table.MainSequencingID == latest_cds_id
+            ].index[0]
             rows.append((mc, pr, "rna"))
         # dna
         # if there is only one dna (wes + wgs) PR associated with this MC, pick that PR
@@ -150,8 +180,12 @@ def makeAchillesChoiceTable(
             )
             > 1
         ):
-            cds_ids_wgs = prs_in_mc[prs_in_mc.Datatype == "wgs"].MainSequencingID.tolist()
-            cds_ids_wes = prs_in_mc[prs_in_mc.Datatype == "wes"].MainSequencingID.tolist()
+            cds_ids_wgs = prs_in_mc[
+                prs_in_mc.Datatype == "wgs"
+            ].MainSequencingID.tolist()
+            cds_ids_wes = prs_in_mc[
+                prs_in_mc.Datatype == "wes"
+            ].MainSequencingID.tolist()
             pr = ""
             # if this MC doesn't have any wgs PRs
             if len(cds_ids_wgs) == 0:
@@ -162,9 +196,9 @@ def makeAchillesChoiceTable(
                     source_priority
                 )
                 latest_cds_id_wes = subset_seq_table.loc[cds_ids_wes, "source"].idxmin()
-                pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id_wes].index[
-                    0
-                ]
+                pr = subset_pr_table[
+                    subset_pr_table.MainSequencingID == latest_cds_id_wes
+                ].index[0]
             # if this MC has wgs PR(s)
             else:
                 # ignore the wes PRs, select the PR from the most prioritized source
@@ -174,9 +208,9 @@ def makeAchillesChoiceTable(
                     source_priority
                 )
                 latest_cds_id_wgs = subset_seq_table.loc[cds_ids_wgs, "source"].idxmin()
-                pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id_wgs].index[
-                    0
-                ]
+                pr = subset_pr_table[
+                    subset_pr_table.MainSequencingID == latest_cds_id_wgs
+                ].index[0]
             rows.append((mc, pr, "dna"))
     ach_table = pd.DataFrame(rows, columns=colnames)
 
@@ -184,7 +218,9 @@ def makeAchillesChoiceTable(
 
 
 def makeDefaultModelTable(
-    prs, source_priority=SOURCE_PRIORITY, colnames=DEFAULT_TABLE_COLS,
+    prs,
+    source_priority=SOURCE_PRIORITY,
+    colnames=DEFAULT_TABLE_COLS,
 ):
     """generate a table that indicates which profiles are released corresponding to which modelID
 
@@ -223,11 +259,15 @@ def makeDefaultModelTable(
         # pick the PR from the most prioritized source according to the
         # ranking in source_priority
         elif len(prs_in_model[prs_in_model.Datatype == "rna"]) > 1:
-            cds_ids = prs_in_model[prs_in_model.Datatype == "rna"].MainSequencingID.tolist()
+            cds_ids = prs_in_model[
+                prs_in_model.Datatype == "rna"
+            ].MainSequencingID.tolist()
             subset_seq_table = seq_table[seq_table.index.isin(cds_ids)]
             subset_seq_table.source = subset_seq_table.source.replace(source_priority)
             latest_cds_id = subset_seq_table.loc[cds_ids, "source"].idxmin()
-            pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id].index[0]
+            pr = subset_pr_table[
+                subset_pr_table.MainSequencingID == latest_cds_id
+            ].index[0]
             rows.append((m, pr, "rna"))
         # dna
         # if there is only one dna (wes + wgs) PR associated with this Model, pick that PR
@@ -252,7 +292,9 @@ def makeDefaultModelTable(
             )
             > 1
         ):
-            cds_ids_wgs = prs_in_model[prs_in_model.Datatype == "wgs"].MainSequencingID.tolist()
+            cds_ids_wgs = prs_in_model[
+                prs_in_model.Datatype == "wgs"
+            ].MainSequencingID.tolist()
             cds_ids_wes = prs_in_model[
                 (prs_in_model.Datatype == "wes") & (prs_in_model.MainSequencingID != "")
             ].MainSequencingID.tolist()  # MainSequencingID is '' when the profile is in legacy
@@ -265,9 +307,9 @@ def makeDefaultModelTable(
                     source_priority
                 )
                 latest_cds_id_wes = subset_seq_table.loc[cds_ids_wes, "source"].idxmin()
-                pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id_wes].index[
-                    0
-                ]
+                pr = subset_pr_table[
+                    subset_pr_table.MainSequencingID == latest_cds_id_wes
+                ].index[0]
             # if there is wgs, always select wgs
             else:
                 subset_seq_table = seq_table[seq_table.index.isin(cds_ids_wgs)]
@@ -275,12 +317,13 @@ def makeDefaultModelTable(
                     source_priority
                 )
                 latest_cds_id_wgs = subset_seq_table.loc[cds_ids_wgs, "source"].idxmin()
-                pr = subset_pr_table[subset_pr_table.MainSequencingID == latest_cds_id_wgs].index[
-                    0
-                ]
+                pr = subset_pr_table[
+                    subset_pr_table.MainSequencingID == latest_cds_id_wgs
+                ].index[0]
             rows.append((m, pr, "dna"))
     default_table = pd.DataFrame(rows, columns=colnames)
     return default_table
+
 
 def makeProfileTable(prs, columns=PROFILE_TABLE_COLS):
     """subset gumbo profile table both column- and row-wise for the release
@@ -299,11 +342,11 @@ def makeProfileTable(prs, columns=PROFILE_TABLE_COLS):
     mytracker.close_gumbo_client()
     return pr_table
 
+
 def initVirtualDatasets(
     samplesetname, taiga_folder_id=VIRTUAL_FOLDER, portals=DATASETS
 ):
-    """initialize both PR- and Model-level taiga virtual datasets for all 4 portals by uploading an empty dummy file
-    """
+    """initialize both PR- and Model-level taiga virtual datasets for all 4 portals by uploading an empty dummy file"""
     virutal = dict()
     tc = TaigaClient()
     for p in portals:
@@ -435,10 +478,14 @@ def uploadModelMatrix(
 
 
 def uploadBinaryGuideMutationMatrixModel(
-    pr2model_dict, portal, taiga_latest=TAIGA_MUTATION, fn_mapping=VIRTUAL_FILENAMES_GUIDEMUT, taiga_virtual="",
+    pr2model_dict,
+    portal,
+    taiga_latest=TAIGA_MUTATION,
+    fn_mapping=VIRTUAL_FILENAMES_GUIDEMUT,
+    taiga_virtual="",
 ):
     """subset, rename, save and upload to taiga germline binary matrix
-    
+
     Args:
         pr2model_dict (dict): renaming scheme mapping from PR-id to model id
         portal (str): which portal the data is being uploaded to
@@ -492,7 +539,7 @@ def uploadAuxTables(
 ):
     """upload achilles choice and default model table to all portals
     Args:
-    
+
         taiga_ids (dict, optional): dict mapping portal name to taiga virtual dataset id
         folder (str, optional): where the tables are saved
     """
@@ -507,9 +554,7 @@ def uploadAuxTables(
         default_table.to_csv(
             folder + portal + "_" + default_table_name + ".csv", index=False
         )
-        profile_table.to_csv(
-            folder + portal + "_" + release_pr_table_name + ".csv"
-        )
+        profile_table.to_csv(folder + portal + "_" + release_pr_table_name + ".csv")
         tc = TaigaClient()
         tc.update_dataset(
             dataset_id=taiga_ids[portal],
@@ -528,7 +573,12 @@ def uploadAuxTables(
                     "encoding": "utf-8",
                 },
                 {
-                    "path": folder + "/" + portal + "_" + release_pr_table_name + ".csv",
+                    "path": folder
+                    + "/"
+                    + portal
+                    + "_"
+                    + release_pr_table_name
+                    + ".csv",
                     "name": "OmicsProfiles",
                     "format": "TableCSV",
                     "encoding": "utf-8",
@@ -538,9 +588,15 @@ def uploadAuxTables(
         )
 
 
-def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, folder=WORKING_DIR + SAMPLESETNAME, files_table=LATEST2FN_TABLE_PR, today=None):
+def makePRLvMatrices(
+    virtual_ids=VIRTUAL,
+    files_nummat=LATEST2FN_NUMMAT_PR,
+    folder=WORKING_DIR + SAMPLESETNAME,
+    files_table=LATEST2FN_TABLE_PR,
+    today=None,
+):
     """for each portal, save and upload profile-indexed data matrices
-    
+
     Args:
         taiga_ids (dict): dictionary that maps portal name to virtual taiga dataset id
 
@@ -560,7 +616,7 @@ def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, fold
                     virtual,
                     "NumericMatrixCSV",
                     pr_col="index",
-                    folder=folder+ "/",
+                    folder=folder + "/",
                     change_desc="adding " + virtual,
                 )
         for latest_id, fn_dict in files_table.items():
@@ -573,14 +629,21 @@ def makePRLvMatrices(virtual_ids=VIRTUAL, files_nummat=LATEST2FN_NUMMAT_PR, fold
                     virtual,
                     "TableCSV",
                     pr_col=SAMPLEID,
-                    folder=folder+ "/",
+                    folder=folder + "/",
                     change_desc="adding " + virtual,
                 )
 
 
-def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME, files_nummat=LATEST2FN_NUMMAT_MODEL, files_table=LATEST2FN_TABLE_MODEL, upload_guide_matrices=True, today=None):
+def makeModelLvMatrices(
+    virtual_ids=VIRTUAL,
+    folder=WORKING_DIR + SAMPLESETNAME,
+    files_nummat=LATEST2FN_NUMMAT_MODEL,
+    files_table=LATEST2FN_TABLE_MODEL,
+    upload_guide_matrices=True,
+    today=None,
+):
     """for each portal, save and upload profile-indexed data matrices
-    
+
     Args:
         taiga_ids (dict): dictionary that maps portal name to virtual taiga dataset id
 
@@ -603,7 +666,7 @@ def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME,
                     virtual,
                     "NumericMatrixCSV",
                     pr_col="index",
-                    folder=folder+ "/",
+                    folder=folder + "/",
                     change_desc="adding " + virtual,
                 )
         for latest_id, fn_dict in files_table.items():
@@ -616,7 +679,7 @@ def makeModelLvMatrices(virtual_ids=VIRTUAL, folder=WORKING_DIR + SAMPLESETNAME,
                     virtual,
                     "TableCSV",
                     pr_col=SAMPLEID,
-                    folder=folder+ "/",
+                    folder=folder + "/",
                     change_desc="adding " + virtual,
                 )
         if upload_guide_matrices:

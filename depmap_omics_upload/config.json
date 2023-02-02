@@ -1,9 +1,13 @@
 {
     "dryrun": false,
     "gumbo_env": "staging",
-    "datatypes": ["wgs"],
+    "datatypes": [
+        "wgs"
+    ],
     "savefolder": "loaded_samples/",
-    "new_wgs_sample_tables": ["/home/xiaomeng/bin/depmap_omics_upload/depmap_omics_upload/loaded_samples/WGStest.csv"],
+    "new_wgs_sample_tables": [
+        "/home/xiaomeng/bin/depmap_omics_upload/depmap_omics_upload/loaded_samples/WGStest.csv"
+    ],
     "new_rna_sample_tables": [],
     "extract_defaults": {
         "name": "sample_alias",
@@ -56,11 +60,23 @@
         "wgs": 10000000000
     },
     "wgsworkspaces": [
-        ["DEPMAP", "broad-genomics-data/DepMap_WGS", "cram"],
-        ["PRISM", "broad-genomics-data/Broad_PRISM_Jacob_Smigiel_4_21_2022", "cram"]
+        [
+            "DEPMAP",
+            "broad-genomics-data/DepMap_WGS",
+            "cram"
+        ],
+        [
+            "PRISM",
+            "broad-genomics-data/Broad_PRISM_Jacob_Smigiel_4_21_2022",
+            "cram"
+        ]
     ],
     "rnaworkspaces": [
-        ["DEPMAP", "broad-firecloud-ccle/CCLE_DepMap_RNAseq_sandbox", "bam"]
+        [
+            "DEPMAP",
+            "broad-firecloud-ccle/CCLE_DepMap_RNAseq_sandbox",
+            "bam"
+        ]
     ],
     "rna_hg19_path": "gs://cclebams/rna/",
     "wgs_hg38_cram_path": "gs://cclebams/wgs_hg38_cram/"

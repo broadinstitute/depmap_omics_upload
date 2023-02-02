@@ -63,19 +63,42 @@ def addSamplesToGumbo(
 
     return samples, cmds
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     config_filename = sys.argv[1]
     with open(config_filename, "r") as f:
         config = json.load(f)
 
-    today = str(datetime.datetime.now().replace(microsecond=0)).replace(" ", "_").replace(":", "-")
+    today = (
+        str(datetime.datetime.now().replace(microsecond=0))
+        .replace(" ", "_")
+        .replace(":", "-")
+    )
 
-    logging.basicConfig(filename=config["savefolder"] + today + "_add-to-gumbo.log", level=logging.INFO)
+    logging.basicConfig(
+        filename=config["savefolder"] + today + "_add-to-gumbo.log", level=logging.INFO
+    )
 
     for fn in config["new_wgs_sample_tables"]:
         sampletable = pd.read_csv(fn, index_col=0)
-        addSamplesToGumbo(config["gumbo_env"], sampletable, 'wgs', config["wgs_hg38_cram_path"], values=["hg38_cram_filepath", "hg38_crai_filepath"], filetypes=["cram", "crai"], dryrun=config["dryrun"])
-    
+        addSamplesToGumbo(
+            config["gumbo_env"],
+            sampletable,
+            "wgs",
+            config["wgs_hg38_cram_path"],
+            values=["hg38_cram_filepath", "hg38_crai_filepath"],
+            filetypes=["cram", "crai"],
+            dryrun=config["dryrun"],
+        )
+
     for fn in config["new_rna_sample_tables"]:
         sampletable = pd.read_csv(fn, index_col=0)
-        addSamplesToGumbo(config["gumbo_env"], sampletable, 'rna', config["rna_hg19_path"], values=["hg19_bam_filepath", "hg19_bai_filepath"], filetypes=["bam", "bai"], dryrun=config["dryrun"])
+        addSamplesToGumbo(
+            config["gumbo_env"],
+            sampletable,
+            "rna",
+            config["rna_hg19_path"],
+            values=["hg19_bam_filepath", "hg19_bai_filepath"],
+            filetypes=["bam", "bai"],
+            dryrun=config["dryrun"],
+        )

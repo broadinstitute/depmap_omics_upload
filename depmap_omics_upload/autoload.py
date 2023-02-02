@@ -16,6 +16,7 @@ from genepy.google import gcp
 # Loading Functions
 #####################
 
+
 def loadFromMultipleWorkspaces(
     gumbo_env,
     wsnames,
@@ -68,7 +69,7 @@ def loadFromMultipleWorkspaces(
             addonly=addonly,
             maxage=maxage,
             minsizes_bam=minsizes_bam,
-            minsizes_cram=minsizes_cram
+            minsizes_cram=minsizes_cram,
         )
         samples.append(samples_per_ws)
     return pd.concat(samples)
@@ -133,7 +134,15 @@ def loadFromTerraWorkspace(
     logging.info(
         "extracting information from workspace including hash, size, update time, etc."
     )
-    samples = extractFromWorkspace(samples, stype, ftype, bamcol, extract=extract, minsizes_bam=minsizes_bam, minsizes_cram=minsizes_cram)
+    samples = extractFromWorkspace(
+        samples,
+        stype,
+        ftype,
+        bamcol,
+        extract=extract,
+        minsizes_bam=minsizes_bam,
+        minsizes_cram=minsizes_cram,
+    )
     logging.info("generating CDS-ids, annotating source, and renaming columns")
     samples = mapSamples(samples, source, ftype, extract=extract)
     logging.info("checking for duplicates in the workspace by comparing file sizes")
@@ -163,7 +172,10 @@ def loadFromTerraWorkspace(
             # sometimes there will be multiple SM-ids associated with one bam on Terra
             # in the format of "SM-xxxxx,SM-yyyyy", so split them
             pr_id = pr_table[
-                (~pr_table[gumboidcol].isnull()) & (pr_table[gumboidcol].isin(set(v[wsidcol].split(",")))) & (pr_table.Datatype == stype) & (pr_table.BlacklistOmics != True)
+                (~pr_table[gumboidcol].isnull())
+                & (pr_table[gumboidcol].isin(set(v[wsidcol].split(","))))
+                & (pr_table.Datatype == stype)
+                & (pr_table.BlacklistOmics != True)
             ].index.tolist()
             if len(pr_id) > 1:
                 raise ValueError(
@@ -186,7 +198,7 @@ def extractFromWorkspace(
     recompute_hash=True,
     extract={},
     minsizes_bam={},
-    minsizes_cram={}
+    minsizes_cram={},
 ):
     """
     Extract more information from a list of samples found on GP workspaces
@@ -325,7 +337,13 @@ def mapSamples(samples, source, ftype, extract={}):
 
 
 def resolveFromWorkspace(
-    samples, refsamples, wsidcol, ftype, accept_unknowntypes=True, addonly=[], extract={},
+    samples,
+    refsamples,
+    wsidcol,
+    ftype,
+    accept_unknowntypes=True,
+    addonly=[],
+    extract={},
 ):
     """
     Filters our list by trying to find duplicate in our dataset and remove any sample that isn't tumor
@@ -392,24 +410,66 @@ def resolveFromWorkspace(
             samples = samples[samples["sample_type"].isin(["Tumor"])]
     return samples
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     config_filename = sys.argv[1]
     with open(config_filename, "r") as f:
         config = json.load(f)
-    
-    today = str(datetime.datetime.now().replace(microsecond=0)).replace(" ", "_").replace(":", "-")
+
+    today = (
+        str(datetime.datetime.now().replace(microsecond=0))
+        .replace(" ", "_")
+        .replace(":", "-")
+    )
 
     if not os.path.exists(config["savefolder"]):
         os.makedirs(config["savefolder"])
 
-    logging.basicConfig(filename=config["savefolder"] + today + "_" + "-".join(config["datatypes"]) + '.log', level=logging.INFO)
+    logging.basicConfig(
+        filename=config["savefolder"]
+        + today
+        + "_"
+        + "-".join(config["datatypes"])
+        + ".log",
+        level=logging.INFO,
+    )
 
     if "rna" in config["datatypes"]:
-        rnasamples = loadFromMultipleWorkspaces(config['gumbo_env'], config['rnaworkspaces'], config["extract_defaults"]["sm_id"], "SMIDOrdered", "rna", config["extract_defaults"], config['maxage'], config['minsizes_bam'], config['minsizes_cram'], bamcol="cram_or_bam_path")
-        rnasamples[rnasamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(config["savefolder"] + today + "_" + "mappedRNAsamples.csv")
-        rnasamples[rnasamples[config["extract_defaults"]["profile_id"]] == ""].to_csv(config["savefolder"] + today + "_" + "unmappedRNAsamples.csv")
+        rnasamples = loadFromMultipleWorkspaces(
+            config["gumbo_env"],
+            config["rnaworkspaces"],
+            config["extract_defaults"]["sm_id"],
+            "SMIDOrdered",
+            "rna",
+            config["extract_defaults"],
+            config["maxage"],
+            config["minsizes_bam"],
+            config["minsizes_cram"],
+            bamcol="cram_or_bam_path",
+        )
+        rnasamples[rnasamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
+            config["savefolder"] + today + "_" + "mappedRNAsamples.csv"
+        )
+        rnasamples[rnasamples[config["extract_defaults"]["profile_id"]] == ""].to_csv(
+            config["savefolder"] + today + "_" + "unmappedRNAsamples.csv"
+        )
 
     if "wgs" in config["datatypes"]:
-        wgssamples = loadFromMultipleWorkspaces(config['gumbo_env'], config['wgsworkspaces'], config["extract_defaults"]["sm_id"], "SMIDOrdered", "wgs", config["extract_defaults"], config['maxage'], config['minsizes_bam'], config['minsizes_cram'], bamcol="cram_path")
-        wgssamples[wgssamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(config["savefolder"] + today + "_" + "mappedWGSsamples.csv")
-        wgssamples[wgssamples[config["extract_defaults"]["profile_id"]] == ""].to_csv(config["savefolder"] + today + "_" + "unmappedWGSsamples.csv")
+        wgssamples = loadFromMultipleWorkspaces(
+            config["gumbo_env"],
+            config["wgsworkspaces"],
+            config["extract_defaults"]["sm_id"],
+            "SMIDOrdered",
+            "wgs",
+            config["extract_defaults"],
+            config["maxage"],
+            config["minsizes_bam"],
+            config["minsizes_cram"],
+            bamcol="cram_path",
+        )
+        wgssamples[wgssamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
+            config["savefolder"] + today + "_" + "mappedWGSsamples.csv"
+        )
+        wgssamples[wgssamples[config["extract_defaults"]["profile_id"]] == ""].to_csv(
+            config["savefolder"] + today + "_" + "unmappedWGSsamples.csv"
+        )
