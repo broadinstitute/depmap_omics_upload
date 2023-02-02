@@ -130,3 +130,5 @@ dmypy.json
 
 # templates
 .github/templates/*
+
+depmap_omics_upload/loaded_samples/*
