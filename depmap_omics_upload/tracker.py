@@ -36,7 +36,9 @@ class SampleTracker:
         self.client = gumbo_client.Client(username=GUMBO_CLIENT_USERNAME)
         if gumbo_env == "staging":
             # hard-coded for now, waiting for independent staging envs to be enabled
-            self.client = gumbo_client.Client(config_dir="~/.config/gumbo-staging", username=GUMBO_CLIENT_USERNAME)
+            self.client = gumbo_client.Client(
+                config_dir="~/.config/gumbo-staging", username=GUMBO_CLIENT_USERNAME
+            )
         self.mapping_utils = gumbo_utils.NameMappingUtils()
 
     def commit_gumbo(self):
@@ -100,7 +102,7 @@ class SampleTracker:
         )
         self.client.update(self.seq_table_name, df)
         self.client.commit()
-    
+
     def insert_to_seq_table(self, df):
         df.index.name = self.seq_table_index
         df = df.reset_index(level=0)
@@ -171,7 +173,9 @@ class SampleTracker:
         model_table = self.read_model_table().reset_index(level=0)
         mc = pr_table.loc[pr_id, "ModelCondition"]
         model = mc_table.loc[mc, self.model_table_index]
-        return model_table[model_table[self.model_table_index] == model][model_col].values[0]
+        return model_table[model_table[self.model_table_index] == model][
+            model_col
+        ].values[0]
 
     def update_pr_from_seq(
         self,
@@ -186,14 +190,18 @@ class SampleTracker:
         dryrun=False,
     ):
         seq_table = self.read_seq_table()
-        seq_table = seq_table[(seq_table.blacklist != True) & (seq_table.expected_type.isin(datatype))]
+        seq_table = seq_table[
+            (seq_table.blacklist != True) & (seq_table.expected_type.isin(datatype))
+        ]
         pr_table = self.read_pr_table()
         prs_in_seq_table = seq_table.ProfileID.unique()
 
         cds2pr_dict = {}
         for pr in prs_in_seq_table:
             if len(seq_table[seq_table.ProfileID == pr]) == 1:
-                pr_table.loc[pr, "MainSequencingID"] = seq_table[seq_table.ProfileID == pr].index
+                pr_table.loc[pr, "MainSequencingID"] = seq_table[
+                    seq_table.ProfileID == pr
+                ].index
             else:
                 allv = seq_table[seq_table["ProfileID"] == pr]
                 for k, val in allv.iterrows():
@@ -225,23 +233,23 @@ class SampleTracker:
         requesterpays_project="",
     ):
         """
-    same as shareTerraBams but is completed to work with CCLE bams from the CCLE sample tracker
+        same as shareTerraBams but is completed to work with CCLE bams from the CCLE sample tracker
 
-    Args:
-    ----
-        users: list[str] of users' google accounts
-        groups: list[str] of groups' google accounts
-        samples list[str] of samples cds_ids for which you want to share data
-        bamcols: list[str] list of column names where bams/bais are
-        raise_error: whether or not to raise an error if we find blacklisted lines
-        refsheet_url: the google spreadsheet where the samples are stored
-        privacy_sheeturl: the google spreadsheet where the samples are stored
-        requesterpays_project: the google project where the requester pays bucket is located
+        Args:
+        ----
+            users: list[str] of users' google accounts
+            groups: list[str] of groups' google accounts
+            samples list[str] of samples cds_ids for which you want to share data
+            bamcols: list[str] list of column names where bams/bais are
+            raise_error: whether or not to raise an error if we find blacklisted lines
+            refsheet_url: the google spreadsheet where the samples are stored
+            privacy_sheeturl: the google spreadsheet where the samples are stored
+            requesterpays_project: the google project where the requester pays bucket is located
 
-    Returns:
-    --------
-        a list of the gs path we have been giving access to
-    """
+        Returns:
+        --------
+            a list of the gs path we have been giving access to
+        """
         refdata = self.read_seq_table()
         pr_table = self.read_pr_table()
         blacklist = [i for i in refdata["blacklist"].values.tolist() if i == 1]
@@ -253,7 +261,7 @@ class SampleTracker:
                 raise ValueError("blacklistedlines")
         if type(users) is str:
             users = [users]
-        
+
         embargoed = []
         for s in samples:
             pr_id = refdata.loc[s, "ProfileID"]
@@ -263,7 +271,9 @@ class SampleTracker:
                 embargoed.append(s)
 
         if len(embargoed) > 0:
-            print("the following lines are currently under embargo, can't share the files yet!")
+            print(
+                "the following lines are currently under embargo, can't share the files yet!"
+            )
             print(embargoed)
             samples = [s for s in samples if s not in embargoed]
 
@@ -348,7 +358,7 @@ def findIssue(
 
     Args:
         tracker (pandas.DataFrame): the tracker
-        dup (list, optional): the list of columns to check for duplicates. 
+        dup (list, optional): the list of columns to check for duplicates.
         Defaults to ['age', 'sex', 'arxspan_id', 'cellosaurus_id', 'primary_site', 'primary_disease',
         'subtype', 'lineage', 'stripped_cell_line_name']
     """
@@ -582,7 +592,7 @@ def changeCellLineNameInNew(
     !!!! DOES NOT YET WORK !!!! version compute is wrong
     Args:
     -----
-        new: change the cell line name in this dataframe 
+        new: change the cell line name in this dataframe
         dupdict: dict(tochange,newname) (arxspan_id:arxspan_id)
         datatype: str for a ref with many datatype (to get the right version number)
 
@@ -821,7 +831,9 @@ def update(
         table.loc[res.index.tolist()][
             ["legacy_size", "legacy_crc32c_hash"]
         ] = table.loc[res.index.tolist()][["size", "crc32c_hash"]].values
-        table.loc[res.index.tolist(), ["bam_filepath", "bai_filepath"]] = res[bamfilepaths[:2]].values
+        table.loc[res.index.tolist(), ["bam_filepath", "bai_filepath"]] = res[
+            bamfilepaths[:2]
+        ].values
         table.loc[res.index.tolist(), "size"] = [
             gcp.extractSize(i)[1]
             for i in gcp.lsFiles(res[bamfilepaths[0]].tolist(), "-l")

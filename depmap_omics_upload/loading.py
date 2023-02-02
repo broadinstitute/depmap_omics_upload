@@ -153,7 +153,9 @@ def loadFromTerraWorkspace(
     samples[extract["expected_type"]] = stype
     # FOR NOW, assume the id col to map by is in profile table (might change??)
     for k, v in samples.iterrows():
-        if (not pd.isnull(v[wsidcol])) and v[wsidcol] in pr_table[pr_table.Datatype == stype][gumboidcol].tolist():
+        if (not pd.isnull(v[wsidcol])) and v[wsidcol] in pr_table[
+            pr_table.Datatype == stype
+        ][gumboidcol].tolist():
             # different datatypes from the same line might share the same SM-ID
             # so mapping should condition on datatype as well
             pr_id = pr_table[
@@ -177,7 +179,7 @@ def loadFromMultipleSources(terraworkspaces=[]):
 
     Args:
     -----
-        terraworkspaces ([dict]): 
+        terraworkspaces ([dict]):
 
     Returns:
     --------
@@ -381,7 +383,13 @@ def mapSamples(samples, source, ftype, extract={}):
 
 
 def resolveFromWorkspace(
-    samples, refsamples, wsidcol, ftype, accept_unknowntypes=True, addonly=[], extract={},
+    samples,
+    refsamples,
+    wsidcol,
+    ftype,
+    accept_unknowntypes=True,
+    addonly=[],
+    extract={},
 ):
     """
     Filters our list by trying to find duplicate in our dataset and remove any sample that isn't tumor
@@ -592,11 +600,7 @@ def addSamplesToDepMapWorkspace(
     refworkspace,
     samplesetname="",
     add_to_samplesets=[],
-    model_cols_to_add=[
-        "PatientID",
-        "ModelID",
-        "StrippedCellLineName"
-    ],
+    model_cols_to_add=["PatientID", "ModelID", "StrippedCellLineName"],
 ):
     """update the samples on a depmapomics terra processing workspace
 
@@ -611,14 +615,21 @@ def addSamplesToDepMapWorkspace(
 
     terra_samples = refwm.get_samples()
     seq_table = mytracker.add_model_cols_to_seqtable(cols=model_cols_to_add)
-    
+
     # terra requires a participant_id column
-    seq_table = seq_table.rename(columns={"PatientID": "participant_id", "ModelID": "arxspan_id", "StrippedCellLineName": "stripped_cell_line_name"})
-    seq_table['participant_id'] = seq_table['participant_id'].fillna("nan")
-    
+    seq_table = seq_table.rename(
+        columns={
+            "PatientID": "participant_id",
+            "ModelID": "arxspan_id",
+            "StrippedCellLineName": "stripped_cell_line_name",
+        }
+    )
+    seq_table["participant_id"] = seq_table["participant_id"].fillna("nan")
+
     # check which lines are new and need to be imported to terra
     samples_to_add = seq_table[
-        (~seq_table.index.isin(terra_samples.index)) & (seq_table.expected_type == stype)
+        (~seq_table.index.isin(terra_samples.index))
+        & (seq_table.expected_type == stype)
     ]
     print("found " + str(len(samples_to_add)) + " new samples to import!")
 
