@@ -21,7 +21,7 @@ def loadFromMultipleWorkspaces(
     gumbo_env,
     wsnames,
     wsidcol,
-    gumboidcol,
+    gumboidcols,
     stype,
     extract,
     maxage,
@@ -57,7 +57,7 @@ def loadFromMultipleWorkspaces(
             gumbo_env,
             wsname,
             wsidcol,
-            gumboidcol,
+            gumboidcols,
             s,
             stype,
             ftype,
@@ -79,7 +79,7 @@ def loadFromTerraWorkspace(
     gumbo_env,
     wsname,
     wsidcol,
-    gumboidcol,
+    gumboidcols,
     source,
     stype,
     ftype,
@@ -165,24 +165,40 @@ def loadFromTerraWorkspace(
     samples[extract["version"]] = 1
     samples[extract["expected_type"]] = stype
     # FOR NOW, assume the id col to map by is in profile table (might change??)
+    logging.info(
+        "consolidating potential validation id matches from columns: "
+        + str(gumboidcols)
+    )
+    pr_table["id_to_map"] = pr_table[gumboidcols].astype(str).agg(",".join, axis=1)
+    pr_table["id_to_map"] = pr_table["id_to_map"].str.split(",").apply(set)
+    mult_to_one_prs = []
     for k, v in samples.iterrows():
         if not pd.isnull(v[wsidcol]):
             # different datatypes from the same line might share the same SM-ID,
             # so mapping should condition on datatype as well;
             # sometimes there will be multiple SM-ids associated with one bam on Terra
             # in the format of "SM-xxxxx,SM-yyyyy", so split them
+            pr_table["intersection"] = pr_table.apply(
+                lambda x: set(x.id_to_map) & set(v[wsidcol].split(",")), axis=1
+            )
             pr_id = pr_table[
-                (~pr_table[gumboidcol].isnull())
-                & (pr_table[gumboidcol].isin(set(v[wsidcol].split(","))))
+                (pr_table["id_to_map"] != {"None"})
+                & (pr_table["intersection"] != set())
                 & (pr_table.Datatype == stype)
                 & (pr_table.BlacklistOmics != True)
             ].index.tolist()
             if len(pr_id) > 1:
-                raise ValueError(
-                    "multiple profile ids mapped to the same validation id. check with ops!"
-                )
+                mult_to_one_prs.append(set(v[wsidcol].split(",")))
             elif len(pr_id) == 1:
                 samples.loc[k, extract["profile_id"]] = pr_id[0]
+    if len(mult_to_one_prs) > 0:
+        logging.warning(
+            "The following validation ids have multiple PRs associated with them:"
+        )
+        logging.warning(str(mult_to_one_prs))
+        raise ValueError(
+            "multiple profile ids mapped to the same validation id. check with ops!"
+        )
 
     return samples
 
@@ -439,7 +455,7 @@ if __name__ == "__main__":
             config["gumbo_env"],
             config["rnaworkspaces"],
             config["extract_defaults"]["sm_id"],
-            "SMIDOrdered",
+            {"SMIDOrdered", "sm_id_matched"},
             "rna",
             config["extract_defaults"],
             config["maxage"],
@@ -459,7 +475,7 @@ if __name__ == "__main__":
             config["gumbo_env"],
             config["wgsworkspaces"],
             config["extract_defaults"]["sm_id"],
-            "SMIDOrdered",
+            {"SMIDOrdered", "sm_id_matched"},
             "wgs",
             config["extract_defaults"],
             config["maxage"],
