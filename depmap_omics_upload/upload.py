@@ -337,8 +337,10 @@ def makeProfileTable(prs, columns=PROFILE_TABLE_COLS):
     """
     mytracker = track.SampleTracker()
     pr_table = mytracker.add_model_cols_to_prtable(["ModelID"])
-    pr_table = pr_table.loc[prs, columns]
+    pr_table = pr_table.loc[prs, columns].rename(columns={"Baits": "WESKit"})
     pr_table = pr_table[pr_table["Datatype"].isin(["rna", "wgs", "wes", "SNParray"])]
+    pr_table[pr_table["Datatype"].isin(["rna", "wgs", "SNParray"])]["WESKit"] = ""
+
     mytracker.close_gumbo_client()
     return pr_table
 
