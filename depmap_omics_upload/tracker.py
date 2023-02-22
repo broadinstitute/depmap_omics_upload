@@ -3,7 +3,6 @@ from genepy.utils import helper as h
 import numpy as np
 import os
 
-from depmapomics import terra as myterra
 from genepy import terra
 from genepy.google import gcp
 import dalmatian as dm
@@ -15,7 +14,6 @@ import json
 import pkgutil
 
 # loading config
-
 configdata = pkgutil.get_data(__name__, "config.json")
 config = json.loads(configdata)
 
@@ -849,6 +847,42 @@ def update(
         return None
 
 
+def getQC(workspace, only=[], qcname=[], match=""):
+    """
+    Copied from depmap_omics.
+    Will get from a workspace, the QC data for each samples
+
+    Args:
+    -----
+        workspace: the workspace name
+        only: do it only for this set of samples
+        qcname: col name where the QC is in the workspace samples
+        match: for example'.Log.final.out' get only that QC if you have a list of QCs in you qcname col
+
+    Returns:
+    --------
+        a dict(sample_id:list[QC_filepaths])
+    """
+    if type(qcname) is str:
+        qcname = [qcname]
+    res = {}
+    wm = dm.WorkspaceManager(workspace)
+    sam = wm.get_samples()
+    if len(only) > 0:
+        sam = sam[sam.index.isin(only)]
+    for k, val in sam.iterrows():
+        res[k] = []
+        for i in val[qcname]:
+            if type(i) is list:
+                if match:
+                    res[k].extend([e for e in i if match in e])
+                else:
+                    res[k].extend(i)
+            else:
+                res[k].append(i)
+    return res
+
+
 def updateTrackerRNA(
     failed,
     lowqual,
@@ -889,7 +923,7 @@ def updateTrackerRNA(
             for i in refwm.get_entities("sample_set").loc[samplesetname].samples
         ]
     if starlogs == {}:
-        starlogs = myterra.getQC(
+        starlogs = getQC(
             workspace=refworkspace, only=samplesinset, qcname=qcname, match=match
         )
     for k, v in starlogs.items():
@@ -956,12 +990,12 @@ def updateTrackerWGS(
         dataProc = (
             {}
             if procqc == []
-            else myterra.getQC(workspace=refworkspace, only=samplesinset, qcname=procqc)
+            else getQC(workspace=refworkspace, only=samplesinset, qcname=procqc)
         )
         dataBam = (
             {}
             if bamqc == []
-            else myterra.getQC(workspace=refworkspace, only=samplesinset, qcname=bamqc)
+            else getQC(workspace=refworkspace, only=samplesinset, qcname=bamqc)
         )
         for k, v in dataProc.items():
             if k == "nan":
