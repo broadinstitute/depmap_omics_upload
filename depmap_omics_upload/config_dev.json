@@ -1,0 +1,99 @@
+{
+    "dryrun": false,
+    "sampleset": "22Q4",
+    "gumbo_env": "staging",
+    "datatypes": [
+        "wgs"
+    ],
+    "savefolder": "loaded_samples/",
+    "new_wgs_sample_tables": [
+        "/home/xiaomeng/bin/depmap_omics_upload/depmap_omics_upload/loaded_samples/WGStest.csv"
+    ],
+    "new_rna_sample_tables": [],
+    "extract_defaults": {
+        "name": "sample_alias",
+        "bai": "crai_or_bai_path",
+        "bam": "cram_or_bam_path",
+        "cram": "cram_path",
+        "crai": "crai_path",
+        "ref_bam": "hg19_bam_filepath",
+        "ref_type": "Datatype",
+        "ref_bai": "hg19_bai_filepath",
+        "ref_cram": "hg38_cram_filepath",
+        "ref_crai": "hg38_crai_filepath",
+        "version": "version",
+        "primary_disease": "primary_disease",
+        "ref_arxspan_id": "arxspan_id",
+        "ref_name": "stripped_cell_line_name",
+        "source": "source",
+        "size": "size",
+        "legacy_size": "legacy_size",
+        "from_arxspan_id": "individual_alias",
+        "ref_id": "sample_id",
+        "PDO_id_terra": "PDO",
+        "PDO_id_gumbo": "PdoId",
+        "update_time": "update_time",
+        "from_patient_id": "individual_alias",
+        "patient_id": "participant_id",
+        "ref_date": "date_sequenced",
+        "hs_hs_library_size": "hs_hs_library_size",
+        "hs_het_snp_sensitivity": "hs_het_snp_sensitivity",
+        "hs_mean_bait_coverage": "hs_mean_bait_coverage",
+        "hs_mean_target_coverage": "hs_mean_target_coverage",
+        "hs_on_target_bases": "hs_on_target_bases",
+        "total_reads": "total_reads",
+        "release_date": "sequencing_date",
+        "hash": "crc32c_hash",
+        "legacy_hash": "legacy_crc32c_hash",
+        "mean_depth": "mean_depth",
+        "root_sample_id": "root_sample_id",
+        "sm_id": "SmId",
+        "profile_id": "ProfileID",
+        "expected_type": "expected_type"
+    },
+    "maxage": "2021-01-01",
+    "minsizes_bam": {
+        "rna": 2000000000,
+        "wes": 3000000000,
+        "wgs": 50000000000
+    },
+    "minsizes_cram": {
+        "wgs": 10000000000
+    },
+    "wgsworkspaces": [
+        [
+            "DEPMAP",
+            "broad-genomics-data/DepMap_WGS",
+            "cram"
+        ],
+        [
+            "PRISM",
+            "broad-genomics-data/Broad_PRISM_Jacob_Smigiel_4_21_2022",
+            "cram"
+        ]
+    ],
+    "rnaworkspaces": [
+        [
+            "DEPMAP",
+            "terra-broad-cancer-prod/CCLE_DepMap_RNAseq",
+            "bam"
+        ],
+        [
+            "IBM",
+            "terra-broad-cancer-prod/Getz_IBM_CellLines_RNASeqData",
+            "bam"
+        ]
+    ],
+    "rna_hg19_path": "gs://cclebams/rna/",
+    "wgs_hg38_cram_path": "gs://cclebams/wgs_hg38_cram/",
+    "datasets": [
+        "internal",
+        "dmc",
+        "public"
+    ],
+    "date_col_dict": {
+        "internal": "InternalReleaseDate",
+        "dmc": "ConsortiumReleaseDate",
+        "public": "PublicReleaseDate",
+    }
+}

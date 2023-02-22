@@ -438,14 +438,14 @@ if __name__ == "__main__":
         .replace(":", "-")
     )
 
-    if not os.path.exists(config["savefolder"]):
-        os.makedirs(config["savefolder"])
+    if not os.path.exists(config["loading_workingdir"]):
+        os.makedirs(config["loading_workingdir"])
 
     logging.basicConfig(
-        filename=config["savefolder"]
+        filename=config["loading_workingdir"]
         + today
         + "_"
-        + "-".join(config["datatypes"])
+        + "-".join(config["loading_workingdir"])
         + ".log",
         level=logging.INFO,
     )
@@ -464,10 +464,10 @@ if __name__ == "__main__":
             bamcol="cram_or_bam_path",
         )
         rnasamples[rnasamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
-            config["savefolder"] + today + "_" + "mappedRNAsamples.csv"
+            config["loading_workingdir"] + today + "_" + "mappedRNAsamples.csv"
         )
         rnasamples[rnasamples[config["extract_defaults"]["profile_id"]] == ""].to_csv(
-            config["savefolder"] + today + "_" + "unmappedRNAsamples.csv"
+            config["loading_workingdir"] + today + "_" + "unmappedRNAsamples.csv"
         )
 
     if "wgs" in config["datatypes"]:
@@ -484,8 +484,8 @@ if __name__ == "__main__":
             bamcol="cram_path",
         )
         wgssamples[wgssamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
-            config["savefolder"] + today + "_" + "mappedWGSsamples.csv"
+            config["loading_workingdir"] + today + "_" + "mappedWGSsamples.csv"
         )
         wgssamples[wgssamples[config["extract_defaults"]["profile_id"]] == ""].to_csv(
-            config["savefolder"] + today + "_" + "unmappedWGSsamples.csv"
+            config["loading_workingdir"] + today + "_" + "unmappedWGSsamples.csv"
         )
