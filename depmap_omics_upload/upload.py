@@ -6,10 +6,12 @@ from genepy.utils import helper as h
 from depmap_omics_upload import tracker as track
 from taigapy import TaigaClient
 import json
+import pkgutil
 
 # loading config
-with open("config.json", "r") as f:
-    config = json.load(f)
+
+configdata = pkgutil.get_data(__name__, "config.json")
+config = json.loads(configdata)
 
 config["latest2fn_nummat_model"] = {
     config["taiga_cn"]: config["virtual_filenames_nummat_cn_model"],
@@ -369,7 +371,10 @@ def makeProfileTable(prs, columns=config["profile_table_cols"]):
     pr_table = mytracker.add_model_cols_to_prtable(["ModelID"])
     pr_table = pr_table.loc[prs, columns].rename(columns={"Baits": "WESKit"})
     pr_table = pr_table[pr_table["Datatype"].isin(["rna", "wgs", "wes", "SNParray"])]
-    pr_table[pr_table["Datatype"].isin(["rna", "wgs", "SNParray"])]["WESKit"] = ""
+    pr_table.loc[
+        pr_table[pr_table["Datatype"].isin(["rna", "wgs", "SNParray"])].index.tolist(),
+        "WESKit",
+    ] = ""
 
     mytracker.close_gumbo_client()
     return pr_table

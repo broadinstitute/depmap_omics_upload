@@ -2,6 +2,7 @@
     "dryrun": false,
     "sampleset": "22Q4",
     "gumbo_env": "staging",
+    "gumbo_client_username": "szhang",
     "datatypes": [
         "wgs"
     ],
@@ -52,6 +53,10 @@
         "profile_id": "ProfileID",
         "expected_type": "expected_type"
     },
+    "starbamcolterra": [
+        "internal_bam_filepath",
+        "internal_bai_filepath"
+    ],
     "maxage": "2021-01-01",
     "minsizes_bam": {
         "rna": 2000000000,
@@ -61,30 +66,6 @@
     "minsizes_cram": {
         "wgs": 10000000000
     },
-    "wgsworkspaces": [
-        [
-            "DEPMAP",
-            "broad-genomics-data/DepMap_WGS",
-            "cram"
-        ],
-        [
-            "PRISM",
-            "broad-genomics-data/Broad_PRISM_Jacob_Smigiel_4_21_2022",
-            "cram"
-        ]
-    ],
-    "rnaworkspaces": [
-        [
-            "DEPMAP",
-            "terra-broad-cancer-prod/CCLE_DepMap_RNAseq",
-            "bam"
-        ],
-        [
-            "IBM",
-            "terra-broad-cancer-prod/Getz_IBM_CellLines_RNASeqData",
-            "bam"
-        ]
-    ],
     "datasets": [
         "internal",
         "dmc",
@@ -94,7 +75,7 @@
     "date_col_dict": {
         "internal": "InternalReleaseDate",
         "dmc": "ConsortiumReleaseDate",
-        "public": "PublicReleaseDate",
+        "public": "PublicReleaseDate"
     },
     "source_priority": [
         "BROAD",
@@ -104,8 +85,17 @@
         "SANGER",
         "PRISM",
         "CCLF",
-        "CHORDOMA",
+        "CHORDOMA"
     ],
+    "model_table_name": "model",
+    "model_table_index": "ModelID",
+    "mc_table_name": "model_condition",
+    "mc_table_index": "ModelConditionID",
+    "pr_table_name": "omics_profile",
+    "pr_table_index": "ProfileID",
+    "seq_table_name": "omics_sequencing",
+    "seq_table_index": "SequencingID",
+    "sample_table_name": "sample",
     "ach_choice_table_name": "achilles_choice_table",
     "ach_choice_table_cols": [
         "ModelConditionID",
@@ -128,59 +118,59 @@
     "virtual_filenames_guidemut": {
         "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
         "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
-        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne",
+        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne"
     },
     "virtual_filenames_nummat_exp_model": {
         "proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1",
-        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichment",
+        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichment"
     },
     "virtual_filenames_nummat_cn_model": {
         "merged_gene_cn_profile": "OmicsCNGene",
         "merged_absolute_gene_cn_profile": "OmicsAbsoluteCNGene",
         "merged_loh_profile": "OmicsLoH",
-        "globalGenomicFeatures_profile": "OmicsSignatures",
+        "globalGenomicFeatures_profile": "OmicsSignatures"
     },
     "virtual_filenames_nummat_mut_model": {
         "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
         "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging",
-        "somaticMutations_genotypedMatrix_driver_profile": "OmicsSomaticMutationsMatrixDriver",
+        "somaticMutations_genotypedMatrix_driver_profile": "OmicsSomaticMutationsMatrixDriver"
     },
     "virtual_filenames_germline_model": {
-        "binary_germline_mutation": "OmicsGuideMutationsBinaryAvana",
+        "binary_germline_mutation": "OmicsGuideMutationsBinaryAvana"
     },
     "virtual_filenames_table_fusion_model": {
-        "fusions_filtered_profile": "OmicsFusionFiltered",
+        "fusions_filtered_profile": "OmicsFusionFiltered"
     },
     "virtual_filenames_table_cn_model": {},
     "virtual_filenames_table_mut_model": {
         "somaticMutations_profile": "OmicsSomaticMutations",
-        "structuralVariants_profile": "OmicsStructuralVariants",
+        "structuralVariants_profile": "OmicsStructuralVariants"
     },
     "virtual_filenames_guidemut": {
         "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
         "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
-        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne",
+        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne"
     },
     "virtual_filenames_nummat_exp_pr": {
         "genes_expectedCount_profile": "OmicsExpressionGenesExpectedCountProfile",
         "transcripts_expectedCount_profile": "OmicsExpressionTranscriptsExpectedCountProfile",
-        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile",
+        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile"
     },
     "virtual_filenames_nummat_cn_pr": {
-        "globalGenomicFeatures_profile": "OmicsSignaturesProfile",
+        "globalGenomicFeatures_profile": "OmicsSignaturesProfile"
     },
     "virtual_filenames_nummat_mut_pr": {},
     "virtual_filenames_germline_pr": {},
     "virtual_filenames_table_fusion_pr": {
-        "fusions_unfiltered_profile": "OmicsFusionUnfilteredProfile",
+        "fusions_unfiltered_profile": "OmicsFusionUnfilteredProfile"
     },
     "virtual_filenames_table_cn_pr": {
         "merged_segments_profile": "OmicsCNSegmentsProfile",
-        "merged_absolute_segments_profile": "OmicsAbsoluteCNSegmentsProfile",
+        "merged_absolute_segments_profile": "OmicsAbsoluteCNSegmentsProfile"
     },
     "virtual_filenames_table_mut_pr": {
         "somaticMutations_profile": "OmicsSomaticMutationsProfile",
-        "structuralVariants_profile": "OmicsStructuralVariantsProfile",
+        "structuralVariants_profile": "OmicsStructuralVariantsProfile"
     },
     "virtual": {
         "internal": "",
@@ -194,5 +184,33 @@
     "virtual_folder": "8d9c4c0691154a1f86b1b6e67c3fb683",
     "taiga_eternal": "depmap-a0ab",
     "rna_hg19_path": "gs://cclebams/rna/",
+    "rna_hg38_path": "gs://cclebams/rnasq_hg38/",
     "wgs_hg38_cram_path": "gs://cclebams/wgs_hg38_cram/",
+    "wgs_hg38_bam_path": "gs://cclebams//wgs_hg38/",
+    "wgsworkspace": "broad-firecloud-ccle/DepMap_WGS_CN",
+    "wgsworkspaces": [
+        [
+            "DEPMAP",
+            "broad-genomics-data/DepMap_WGS",
+            "cram"
+        ],
+        [
+            "PRISM",
+            "broad-genomics-data/Broad_PRISM_Jacob_Smigiel_4_21_2022",
+            "cram"
+        ]
+    ],
+    "rnaworkspace": "broad-firecloud-ccle/DepMap_hg38_RNAseq",
+    "rnaworkspaces": [
+        [
+            "DEPMAP",
+            "terra-broad-cancer-prod/CCLE_DepMap_RNAseq",
+            "bam"
+        ],
+        [
+            "IBM",
+            "terra-broad-cancer-prod/Getz_IBM_CellLines_RNASeqData",
+            "bam"
+        ]
+    ]
 }
