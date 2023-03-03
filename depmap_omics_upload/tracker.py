@@ -37,11 +37,12 @@ class SampleTracker:
         self.seq_table_index = config["seq_table_index"]
         self.sample_table_name = config["sample_table_name"]
         # prod env for gumbo
-        self.client = gumbo_client.Client(username=["gumbo_client_username"])
+        self.client = gumbo_client.Client(username=config["gumbo_client_username"])
         if gumbo_env == "staging":
             # hard-coded for now, waiting for independent staging envs to be enabled
             self.client = gumbo_client.Client(
-                config_dir="~/.config/gumbo-staging", username=["gumbo_client_username"]
+                config_dir="~/.config/gumbo-staging",
+                username=config["gumbo_client_username"],
             )
         self.mapping_utils = gumbo_utils.NameMappingUtils()
 
