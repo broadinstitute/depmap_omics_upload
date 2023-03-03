@@ -3,8 +3,6 @@ from genepy.utils import helper as h
 import numpy as np
 import os
 
-from depmapomics.config import *
-from depmapomics import terra as myterra
 from genepy import terra
 from genepy.google import gcp
 import dalmatian as dm
@@ -12,6 +10,12 @@ import signal
 import gumbo_client
 import gumbo_client.utils as gumbo_utils
 from datetime import date
+import json
+import pkgutil
+
+# loading config
+configdata = pkgutil.get_data(__name__, "config.json")
+config = json.loads(configdata)
 
 
 # condense all interactions with tracker (for emeril integration)
@@ -23,21 +27,22 @@ class SampleTracker:
     # pylint: disable=too-many-instance-attributes
 
     def __init__(self, gumbo_env="production"):
-        self.model_table_name = MODEL_TABLE_NAME
-        self.mc_table_name = MC_TABLE_NAME
-        self.pr_table_name = PR_TABLE_NAME
-        self.seq_table_name = SEQ_TABLE_NAME
-        self.model_table_index = MODEL_TABLE_INDEX
-        self.mc_table_index = MC_TABLE_INDEX
-        self.pr_table_index = PR_TABLE_INDEX
-        self.seq_table_index = SEQ_TABLE_INDEX
-        self.sample_table_name = SAMPLE_TABLE_NAME
+        self.model_table_name = config["model_table_name"]
+        self.mc_table_name = config["mc_table_name"]
+        self.pr_table_name = config["pr_table_name"]
+        self.seq_table_name = config["seq_table_name"]
+        self.model_table_index = config["model_table_index"]
+        self.mc_table_index = config["mc_table_index"]
+        self.pr_table_index = config["pr_table_index"]
+        self.seq_table_index = config["seq_table_index"]
+        self.sample_table_name = config["sample_table_name"]
         # prod env for gumbo
-        self.client = gumbo_client.Client(username=GUMBO_CLIENT_USERNAME)
+        self.client = gumbo_client.Client(username=config["gumbo_client_username"])
         if gumbo_env == "staging":
             # hard-coded for now, waiting for independent staging envs to be enabled
             self.client = gumbo_client.Client(
-                config_dir="~/.config/gumbo-staging", username=GUMBO_CLIENT_USERNAME
+                config_dir="~/.config/gumbo-staging",
+                username=config["gumbo_client_username"],
             )
         self.mapping_utils = gumbo_utils.NameMappingUtils()
 
@@ -315,23 +320,6 @@ class SampleTracker:
         print("https://cloud.google.com/storage/docs/gsutil_install")
         print("https://cloud.google.com/storage/docs/gsutil/commands/cp")
         return togiveaccess
-
-
-def merge(tracker, new, old, arxspid, cols):
-    """
-    given a tracker a a new and old arxspan id, will merge the two cells lines in the tracker
-
-    Args:
-        tracker (pandas.DataFrame): the tracker
-        new (str): the new arxspan id
-        old (str): the old arxspan id
-        arxspid (str): the column name of the arxspan id
-        cols (list): the columns to merge on
-
-    Returns:
-    """
-    # loc = tracker[tracker[arxspid]==old].index
-    return False
 
 
 def findIssue(
@@ -860,14 +848,50 @@ def update(
         return None
 
 
+def getQC(workspace, only=[], qcname=[], match=""):
+    """
+    Copied from depmap_omics.
+    Will get from a workspace, the QC data for each samples
+
+    Args:
+    -----
+        workspace: the workspace name
+        only: do it only for this set of samples
+        qcname: col name where the QC is in the workspace samples
+        match: for example'.Log.final.out' get only that QC if you have a list of QCs in you qcname col
+
+    Returns:
+    --------
+        a dict(sample_id:list[QC_filepaths])
+    """
+    if type(qcname) is str:
+        qcname = [qcname]
+    res = {}
+    wm = dm.WorkspaceManager(workspace)
+    sam = wm.get_samples()
+    if len(only) > 0:
+        sam = sam[sam.index.isin(only)]
+    for k, val in sam.iterrows():
+        res[k] = []
+        for i in val[qcname]:
+            if type(i) is list:
+                if match:
+                    res[k].extend([e for e in i if match in e])
+                else:
+                    res[k].extend(i)
+            else:
+                res[k].append(i)
+    return res
+
+
 def updateTrackerRNA(
     failed,
     lowqual,
     tracker,
     samplesetname,
-    refworkspace=RNAWORKSPACE,
-    bamfilepaths=STARBAMCOLTERRA,
-    newgs=RNA_GCS_PATH_HG38,
+    refworkspace=config["rnaworkspace"],
+    bamfilepaths=config["starbamcolterra"],
+    newgs=config["rna_hg38_path"],
     dry_run=False,
     qcname="star_logs",
     match=".Log.final.out",
@@ -900,7 +924,7 @@ def updateTrackerRNA(
             for i in refwm.get_entities("sample_set").loc[samplesetname].samples
         ]
     if starlogs == {}:
-        starlogs = myterra.getQC(
+        starlogs = getQC(
             workspace=refworkspace, only=samplesinset, qcname=qcname, match=match
         )
     for k, v in starlogs.items():
@@ -929,7 +953,7 @@ def updateTrackerWGS(
     samplesetname,
     lowqual,
     datatype,
-    newgs=WGS_GCS_PATH_HG38,
+    newgs=config["wgs_hg38_bam_path"],
     samplesinset=[],
     procqc=[],
     bamqc=[],
@@ -967,12 +991,12 @@ def updateTrackerWGS(
         dataProc = (
             {}
             if procqc == []
-            else myterra.getQC(workspace=refworkspace, only=samplesinset, qcname=procqc)
+            else getQC(workspace=refworkspace, only=samplesinset, qcname=procqc)
         )
         dataBam = (
             {}
             if bamqc == []
-            else myterra.getQC(workspace=refworkspace, only=samplesinset, qcname=bamqc)
+            else getQC(workspace=refworkspace, only=samplesinset, qcname=bamqc)
         )
         for k, v in dataProc.items():
             if k == "nan":

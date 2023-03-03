@@ -32,7 +32,7 @@ def read_requirements(path):
 setup(
     name="depmap_omics_upload",
     version=read("depmap_omics_upload", "VERSION"),
-    description="Awesome depmap_omics_upload created by broadinstitute",
+    description="depmap_omics_upload created by @5im1z at broadinstitute. Includes loading and uploading functions critical to the DepMap omics pipeline.",
     url="https://github.com/broadinstitute/depmap_omics_upload/",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
@@ -42,5 +42,7 @@ setup(
     entry_points={
         "console_scripts": ["depmap_omics_upload = depmap_omics_upload.__main__:main"]
     },
+    package_data={"depmap_omics_upload": ["depmap_omics_upload/config.json"]},
+    include_package_data=True,
     extras_require={"test": read_requirements("requirements-test.txt")},
 )

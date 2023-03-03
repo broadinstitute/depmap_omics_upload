@@ -76,7 +76,8 @@ if __name__ == "__main__":
     )
 
     logging.basicConfig(
-        filename=config["savefolder"] + today + "_add-to-gumbo.log", level=logging.INFO
+        filename=config["loading_workingdir"] + today + "_add-to-gumbo.log",
+        level=logging.INFO,
     )
 
     for fn in config["new_wgs_sample_tables"]:

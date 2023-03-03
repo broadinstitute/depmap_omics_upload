@@ -28,7 +28,7 @@ def loadFromMultipleWorkspaces(
     minsizes_bam,
     minsizes_cram,
     only_load_mapped=False,
-    bamcol="cram_or_bam_path",
+    bamcol="",
     load_undefined=False,
     accept_unknowntypes=True,
     addonly=[],
@@ -52,7 +52,8 @@ def loadFromMultipleWorkspaces(
     samples = []
     for s, wsname, ftype in wsnames:
         logging.info("loading " + stype + " samples from terra workspace: " + wsname)
-        bamcol = "cram_or_bam_path" if ftype == "bam" else "cram_path"
+        if bamcol == "":
+            bamcol = "cram_or_bam_path" if ftype == "bam" else "cram_path"
         samples_per_ws = loadFromTerraWorkspace(
             gumbo_env,
             wsname,
@@ -438,11 +439,11 @@ if __name__ == "__main__":
         .replace(":", "-")
     )
 
-    if not os.path.exists(config["savefolder"]):
-        os.makedirs(config["savefolder"])
+    if not os.path.exists(config["loading_workingdir"]):
+        os.makedirs(config["loading_workingdir"])
 
     logging.basicConfig(
-        filename=config["savefolder"]
+        filename=config["loading_workingdir"]
         + today
         + "_"
         + "-".join(config["datatypes"])
@@ -464,10 +465,10 @@ if __name__ == "__main__":
             bamcol="cram_or_bam_path",
         )
         rnasamples[rnasamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
-            config["savefolder"] + today + "_" + "mappedRNAsamples.csv"
+            config["loading_workingdir"] + today + "_" + "mappedRNAsamples.csv"
         )
         rnasamples[rnasamples[config["extract_defaults"]["profile_id"]] == ""].to_csv(
-            config["savefolder"] + today + "_" + "unmappedRNAsamples.csv"
+            config["loading_workingdir"] + today + "_" + "unmappedRNAsamples.csv"
         )
 
     if "wgs" in config["datatypes"]:
@@ -484,8 +485,28 @@ if __name__ == "__main__":
             bamcol="cram_path",
         )
         wgssamples[wgssamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
-            config["savefolder"] + today + "_" + "mappedWGSsamples.csv"
+            config["loading_workingdir"] + today + "_" + "mappedWGSsamples.csv"
         )
         wgssamples[wgssamples[config["extract_defaults"]["profile_id"]] == ""].to_csv(
-            config["savefolder"] + today + "_" + "unmappedWGSsamples.csv"
+            config["loading_workingdir"] + today + "_" + "unmappedWGSsamples.csv"
+        )
+
+    if "wes" in config["datatypes"]:
+        wessamples = loadFromMultipleWorkspaces(
+            config["gumbo_env"],
+            config["wesworkspaces"],
+            config["extract_defaults"]["sm_id"],
+            {"SMIDOrdered", "sm_id_matched"},
+            "wes",
+            config["extract_defaults"],
+            "2000-01-01",
+            config["minsizes_bam"],
+            config["minsizes_cram"],
+            bamcol="formatted_bam_file",
+        )
+        wessamples[wessamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
+            config["loading_workingdir"] + today + "_" + "mappedWESsamples.csv"
+        )
+        wessamples[wessamples[config["extract_defaults"]["profile_id"]] == ""].to_csv(
+            config["loading_workingdir"] + today + "_" + "unmappedWESsamples.csv"
         )

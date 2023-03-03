@@ -1,10 +1,13 @@
 {
     "dryrun": false,
+    "sampleset": "22Q4",
     "gumbo_env": "staging",
+    "gumbo_client_username": "szhang",
     "datatypes": [
         "wgs"
     ],
-    "savefolder": "loaded_samples/",
+    "working_dir": "output/",
+    "loading_workingdir": "output/loaded_samples/",
     "new_wgs_sample_tables": [
         "/home/xiaomeng/bin/depmap_omics_upload/depmap_omics_upload/loaded_samples/WGStest.csv"
     ],
@@ -50,6 +53,10 @@
         "profile_id": "ProfileID",
         "expected_type": "expected_type"
     },
+    "starbamcolterra": [
+        "internal_bam_filepath",
+        "internal_bai_filepath"
+    ],
     "maxage": "2021-01-01",
     "minsizes_bam": {
         "rna": 2000000000,
@@ -59,6 +66,128 @@
     "minsizes_cram": {
         "wgs": 10000000000
     },
+    "datasets": [
+        "internal",
+        "dmc",
+        "public"
+    ],
+    "sample_id": "DepMap_ID",
+    "date_col_dict": {
+        "internal": "InternalReleaseDate",
+        "dmc": "ConsortiumReleaseDate",
+        "public": "PublicReleaseDate"
+    },
+    "source_priority": [
+        "BROAD",
+        "DEPMAP",
+        "IBM",
+        "CCLE2",
+        "SANGER",
+        "PRISM",
+        "CCLF",
+        "CHORDOMA"
+    ],
+    "model_table_name": "model",
+    "model_table_index": "ModelID",
+    "mc_table_name": "model_condition",
+    "mc_table_index": "ModelConditionID",
+    "pr_table_name": "omics_profile",
+    "pr_table_index": "ProfileID",
+    "seq_table_name": "omics_sequencing",
+    "seq_table_index": "SequencingID",
+    "sample_table_name": "sample",
+    "ach_choice_table_name": "achilles_choice_table",
+    "ach_choice_table_cols": [
+        "ModelConditionID",
+        "ProfileID",
+        "ProfileType"
+    ],
+    "default_table_name": "default_model_table",
+    "default_table_cols": [
+        "ModelID",
+        "ProfileID",
+        "ProfileType"
+    ],
+    "release_pr_table_name": "OmicsProfiles",
+    "profile_table_cols": [
+        "ModelCondition",
+        "ModelID",
+        "Datatype",
+        "Baits"
+    ],
+    "virtual_filenames_guidemut": {
+        "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
+        "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
+        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne"
+    },
+    "virtual_filenames_nummat_exp_model": {
+        "proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1",
+        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichment"
+    },
+    "virtual_filenames_nummat_cn_model": {
+        "merged_gene_cn_profile": "OmicsCNGene",
+        "merged_absolute_gene_cn_profile": "OmicsAbsoluteCNGene",
+        "merged_loh_profile": "OmicsLoH",
+        "globalGenomicFeatures_profile": "OmicsSignatures"
+    },
+    "virtual_filenames_nummat_mut_model": {
+        "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
+        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging",
+        "somaticMutations_genotypedMatrix_driver_profile": "OmicsSomaticMutationsMatrixDriver"
+    },
+    "virtual_filenames_germline_model": {
+        "binary_germline_mutation": "OmicsGuideMutationsBinaryAvana"
+    },
+    "virtual_filenames_table_fusion_model": {
+        "fusions_filtered_profile": "OmicsFusionFiltered"
+    },
+    "virtual_filenames_table_cn_model": {},
+    "virtual_filenames_table_mut_model": {
+        "somaticMutations_profile": "OmicsSomaticMutations",
+        "structuralVariants_profile": "OmicsStructuralVariants"
+    },
+    "virtual_filenames_guidemut": {
+        "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
+        "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
+        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne"
+    },
+    "virtual_filenames_nummat_exp_pr": {
+        "genes_expectedCount_profile": "OmicsExpressionGenesExpectedCountProfile",
+        "transcripts_expectedCount_profile": "OmicsExpressionTranscriptsExpectedCountProfile",
+        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile"
+    },
+    "virtual_filenames_nummat_cn_pr": {
+        "globalGenomicFeatures_profile": "OmicsSignaturesProfile"
+    },
+    "virtual_filenames_nummat_mut_pr": {},
+    "virtual_filenames_germline_pr": {},
+    "virtual_filenames_table_fusion_pr": {
+        "fusions_unfiltered_profile": "OmicsFusionUnfilteredProfile"
+    },
+    "virtual_filenames_table_cn_pr": {
+        "merged_segments_profile": "OmicsCNSegmentsProfile",
+        "merged_absolute_segments_profile": "OmicsAbsoluteCNSegmentsProfile"
+    },
+    "virtual_filenames_table_mut_pr": {
+        "somaticMutations_profile": "OmicsSomaticMutationsProfile",
+        "structuralVariants_profile": "OmicsStructuralVariantsProfile"
+    },
+    "virtual": {
+        "internal": "",
+        "dmc": "",
+        "public": ""
+    },
+    "taiga_expression": "expression-d035",
+    "taiga_cn": "cn-latest-d8d4",
+    "taiga_mutation": "mutations-latest-ed72",
+    "taiga_fusion": "fusions-95c9",
+    "virtual_folder": "8d9c4c0691154a1f86b1b6e67c3fb683",
+    "taiga_eternal": "depmap-a0ab",
+    "rna_hg19_path": "gs://cclebams/rna/",
+    "rna_hg38_path": "gs://cclebams/rnasq_hg38/",
+    "wgs_hg38_cram_path": "gs://cclebams/wgs_hg38_cram/",
+    "wgs_hg38_bam_path": "gs://cclebams//wgs_hg38/",
+    "wgsworkspace": "broad-firecloud-ccle/DepMap_WGS_CN",
     "wgsworkspaces": [
         [
             "DEPMAP",
@@ -71,13 +200,17 @@
             "cram"
         ]
     ],
+    "rnaworkspace": "broad-firecloud-ccle/DepMap_hg38_RNAseq",
     "rnaworkspaces": [
         [
             "DEPMAP",
-            "broad-firecloud-ccle/CCLE_DepMap_RNAseq_sandbox",
+            "terra-broad-cancer-prod/CCLE_DepMap_RNAseq",
+            "bam"
+        ],
+        [
+            "IBM",
+            "terra-broad-cancer-prod/Getz_IBM_CellLines_RNASeqData",
             "bam"
         ]
-    ],
-    "rna_hg19_path": "gs://cclebams/rna/",
-    "wgs_hg38_cram_path": "gs://cclebams/wgs_hg38_cram/"
+    ]
 }

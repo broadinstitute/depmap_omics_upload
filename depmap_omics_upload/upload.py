@@ -4,17 +4,49 @@ from datetime import date
 
 from genepy.utils import helper as h
 from depmap_omics_upload import tracker as track
-from depmapomics.config import *
 from taigapy import TaigaClient
+import json
+import pkgutil
+
+# loading config
+
+configdata = pkgutil.get_data(__name__, "config.json")
+config = json.loads(configdata)
+
+config["latest2fn_nummat_model"] = {
+    config["taiga_cn"]: config["virtual_filenames_nummat_cn_model"],
+    config["taiga_expression"]: config["virtual_filenames_nummat_exp_model"],
+    config["taiga_mutation"]: config["virtual_filenames_nummat_mut_model"],
+}
+
+config["latest2fn_table_model"] = {
+    config["taiga_cn"]: config["virtual_filenames_table_cn_model"],
+    config["taiga_fusion"]: config["virtual_filenames_table_fusion_model"],
+    config["taiga_mutation"]: config["virtual_filenames_table_mut_model"],
+}
+
+config["latest2fn_nummat_pr"] = {
+    config["taiga_cn"]: config["virtual_filenames_nummat_cn_pr"],
+    config["taiga_expression"]: config["virtual_filenames_nummat_exp_pr"],
+    config["taiga_mutation"]: config["virtual_filenames_nummat_mut_pr"],
+}
+
+config["latest2fn_table_pr"] = {
+    config["taiga_cn"]: config["virtual_filenames_table_cn_pr"],
+    config["taiga_fusion"]: config["virtual_filenames_table_fusion_pr"],
+    config["taiga_mutation"]: config["virtual_filenames_table_mut_pr"],
+}
 
 
-def getPRToRelease(today=None, portals=DATASETS, date_col_dict=DATE_COL_DICT):
+def getPRToRelease(
+    today=None, portals=config["datasets"], date_col_dict=config["date_col_dict"]
+):
     """generate lists of profiles to release based on date for all portals
 
     Returns:
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
-    if today == None:
+    if today is None:
         today = date.today()
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
@@ -52,7 +84,7 @@ def getPRToRelease(today=None, portals=DATASETS, date_col_dict=DATE_COL_DICT):
     return prs
 
 
-def checkDataPermission(today=None, datecol=DATE_COL_DICT["internal"]):
+def checkDataPermission(today=None, datecol=config["date_col_dict"]["internal"]):
     """confirm that all profiles slated as part of the release all have
     permission to release on the model level
 
@@ -78,9 +110,9 @@ def checkDataPermission(today=None, datecol=DATE_COL_DICT["internal"]):
 
 def checkDataAvailability(
     today=None,
-    exptaigaid=TAIGA_EXPRESSION,
+    exptaigaid=config["taiga_expression"],
     exptaigafn="proteinCoding_genes_tpm_logp1_profile",
-    cntaigaid=TAIGA_CN,
+    cntaigaid=config["taiga_cn"],
     cntaigafn="merged_gene_cn_profile",
 ):
     """confirm that all profiles that are part of the release actually have
@@ -119,8 +151,8 @@ def checkDataAvailability(
 
 def makeAchillesChoiceTable(
     prs,
-    source_priority=SOURCE_PRIORITY,
-    colnames=ACH_CHOICE_TABLE_COLS,
+    source_priority=config["source_priority"],
+    colnames=config["ach_choice_table_cols"],
 ):
     """generate a table for each portal that indicates which profiles are released corresponding to which MC
 
@@ -219,8 +251,8 @@ def makeAchillesChoiceTable(
 
 def makeDefaultModelTable(
     prs,
-    source_priority=SOURCE_PRIORITY,
-    colnames=DEFAULT_TABLE_COLS,
+    source_priority=config["source_priority"],
+    colnames=config["default_table_cols"],
 ):
     """generate a table that indicates which profiles are released corresponding to which modelID
 
@@ -325,7 +357,7 @@ def makeDefaultModelTable(
     return default_table
 
 
-def makeProfileTable(prs, columns=PROFILE_TABLE_COLS):
+def makeProfileTable(prs, columns=config["profile_table_cols"]):
     """subset gumbo profile table both column- and row-wise for the release
 
     Args:
@@ -339,14 +371,17 @@ def makeProfileTable(prs, columns=PROFILE_TABLE_COLS):
     pr_table = mytracker.add_model_cols_to_prtable(["ModelID"])
     pr_table = pr_table.loc[prs, columns].rename(columns={"Baits": "WESKit"})
     pr_table = pr_table[pr_table["Datatype"].isin(["rna", "wgs", "wes", "SNParray"])]
-    pr_table[pr_table["Datatype"].isin(["rna", "wgs", "SNParray"])]["WESKit"] = ""
+    pr_table.loc[
+        pr_table[pr_table["Datatype"].isin(["rna", "wgs", "SNParray"])].index.tolist(),
+        "WESKit",
+    ] = ""
 
     mytracker.close_gumbo_client()
     return pr_table
 
 
 def initVirtualDatasets(
-    samplesetname, taiga_folder_id=VIRTUAL_FOLDER, portals=DATASETS
+    samplesetname, taiga_folder_id=config["virtual_folder"], portals=config["datasets"]
 ):
     """initialize both PR- and Model-level taiga virtual datasets for all 4 portals by uploading an empty dummy file"""
     virutal = dict()
@@ -377,7 +412,7 @@ def uploadPRMatrix(
     virtual_fn,
     matrix_format,
     pr_col="index",
-    folder=WORKING_DIR,
+    folder=config["working_dir"],
     change_desc="",
 ):
     """subset, save and upload to taiga PR-level matrix
@@ -430,8 +465,9 @@ def uploadModelMatrix(
     virtual_fn,
     matrix_format,
     pr_col="index",
-    folder=WORKING_DIR,
+    folder=config["working_dir"],
     change_desc="",
+    sampleid=config["sample_id"],
 ):
     """subset, rename, save and upload to taiga model-level matrix
 
@@ -459,8 +495,8 @@ def uploadModelMatrix(
     else:
         subset_mat = to_subset[
             to_subset[pr_col].isin(set(pr2model_dict.keys()))
-        ].replace({SAMPLEID: pr2model_dict})
-        subset_mat = subset_mat.rename(columns={SAMPLEID: "ModelID"})
+        ].replace({sampleid: pr2model_dict})
+        subset_mat = subset_mat.rename(columns={sampleid: "ModelID"})
         subset_mat.to_csv(folder + virtual_fn + ".csv", index=False)
 
     print("uploading ", virtual_fn, " to virtual")
@@ -482,9 +518,10 @@ def uploadModelMatrix(
 def uploadBinaryGuideMutationMatrixModel(
     pr2model_dict,
     portal,
-    taiga_latest=TAIGA_MUTATION,
-    fn_mapping=VIRTUAL_FILENAMES_GUIDEMUT,
+    taiga_latest=config["taiga_mutation"],
+    fn_mapping=config["virtual_filenames_guidemut"],
     taiga_virtual="",
+    working_dir=config["working_dir"],
 ):
     """subset, rename, save and upload to taiga germline binary matrix
 
@@ -494,7 +531,7 @@ def uploadBinaryGuideMutationMatrixModel(
         taiga_latest (str): which dataset the matrices to be subsetted are being read from
         taiga_virtual (str): which dataset the matrices are being uploaded to
     """
-    folder = WORKING_DIR + portal + "/model/"
+    folder = working_dir + portal + "/model/"
     h.createFoldersFor(folder)
     for latest_fn, virtual_fn in fn_mapping.items():
         # load pr-id indexed matrices for the current quarter
@@ -532,11 +569,11 @@ def uploadBinaryGuideMutationMatrixModel(
 
 
 def uploadAuxTables(
-    taiga_ids=VIRTUAL,
-    ach_table_name=ACH_CHOICE_TABLE_NAME,
-    default_table_name=DEFAULT_TABLE_NAME,
-    release_pr_table_name=RELEASE_PR_TABLE_NAME,
-    folder=WORKING_DIR + SAMPLESETNAME + "/",
+    taiga_ids,
+    ach_table_name=config["ach_choice_table_name"],
+    default_table_name=config["default_table_name"],
+    release_pr_table_name=config["release_pr_table_name"],
+    folder=config["working_dir"] + config["sampleset"] + "/",
     today=None,
 ):
     """upload achilles choice and default model table to all portals
@@ -591,11 +628,12 @@ def uploadAuxTables(
 
 
 def makePRLvMatrices(
-    virtual_ids=VIRTUAL,
-    files_nummat=LATEST2FN_NUMMAT_PR,
-    folder=WORKING_DIR + SAMPLESETNAME,
-    files_table=LATEST2FN_TABLE_PR,
+    virtual_ids,
+    files_nummat=config["latest2fn_nummat_pr"],
+    folder=config["working_dir"] + config["sampleset"],
+    files_table=config["latest2fn_table_pr"],
     today=None,
+    sampleid=config["sample_id"],
 ):
     """for each portal, save and upload profile-indexed data matrices
 
@@ -630,19 +668,20 @@ def makePRLvMatrices(
                     latest,
                     virtual,
                     "TableCSV",
-                    pr_col=SAMPLEID,
+                    pr_col=sampleid,
                     folder=folder + "/",
                     change_desc="adding " + virtual,
                 )
 
 
 def makeModelLvMatrices(
-    virtual_ids=VIRTUAL,
-    folder=WORKING_DIR + SAMPLESETNAME,
-    files_nummat=LATEST2FN_NUMMAT_MODEL,
-    files_table=LATEST2FN_TABLE_MODEL,
+    virtual_ids,
+    folder=config["working_dir"] + config["sampleset"],
+    files_nummat=config["latest2fn_nummat_model"],
+    files_table=config["latest2fn_table_model"],
     upload_guide_matrices=True,
     today=None,
+    sampleid=config["sample_id"],
 ):
     """for each portal, save and upload profile-indexed data matrices
 
@@ -680,7 +719,7 @@ def makeModelLvMatrices(
                     latest,
                     virtual,
                     "TableCSV",
-                    pr_col=SAMPLEID,
+                    pr_col=sampleid,
                     folder=folder + "/",
                     change_desc="adding " + virtual,
                 )
@@ -706,19 +745,21 @@ def findLatestVersion(dataset, approved_only=True):
 
 
 def updateEternal(
-    eternal_id=TAIGA_ETERNAL_UPLOAD, virtual=VIRTUAL, samplesetname=SAMPLESETNAME
+    eternal_id=config["taiga_eternal"],
+    virtual=config["virtual"],
+    samplesetname=config["sampleset"],
 ):
     """update taiga eternal dataset by linking to latest virtual internal dataset"""
     latest_version = findLatestVersion(virtual["internal"])
 
     files = [
-        VIRTUAL_FILENAMES_NUMMAT_EXP.values()
-        + VIRTUAL_FILENAMES_NUMMAT_CN.values()
-        + VIRTUAL_FILENAMES_NUMMAT_MUT.values()
-        + VIRTUAL_FILENAMES_GERMLINE.values()
-        + VIRTUAL_FILENAMES_TABLE_FUSION.values()
-        + VIRTUAL_FILENAMES_TABLE_CN.values()
-        + VIRTUAL_FILENAMES_TABLE_MUT.values()
+        config["virtual_filenames_nummat_exp"].values()
+        + config["virtual_filenames_nummat_cn"].values()
+        + config["virtual_filenames_nummat_mut"].values()
+        + config["virtual_filenames_germline"].values()
+        + config["virtual_filenames_table_fusion"].values()
+        + config["virtual_filenames_table_cn"].values()
+        + config["virtual_filenames_table_mut"].values()
     ]
 
     tc = TaigaClient()
@@ -734,7 +775,7 @@ def updateEternal(
 
 def CCLEupload(taiga_ids=""):
     if taiga_ids == "":
-        taiga_ids = initVirtualDatasets(samplesetname=SAMPLESETNAME)
+        taiga_ids = initVirtualDatasets(samplesetname=config["sampleset"])
 
     makePRLvMatrices(virtual_ids=taiga_ids)
     makeModelLvMatrices(virtual_ids=taiga_ids)
