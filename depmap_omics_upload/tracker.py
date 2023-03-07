@@ -1,10 +1,10 @@
 # tracker.py
-from genepy.utils import helper as h
+from mgenepy.utils import helper as h
 import numpy as np
 import os
 
-from genepy import terra
-from genepy.google import gcp
+from mgenepy import terra
+from mgenepy.google import gcp
 import dalmatian as dm
 import signal
 import gumbo_client
@@ -782,6 +782,7 @@ def update(
     dry_run=False,
     samplesinset=[],
     todrop=[],
+    billing_proj=None,
 ):
     """updates the sample tracker (or Gumbo omicSequencing table) with the new samples and the QC metrics
     Args:
@@ -824,14 +825,27 @@ def update(
         ].values
         table.loc[res.index.tolist(), "size"] = [
             gcp.extractSize(i)[1]
-            for i in gcp.lsFiles(res[bamfilepaths[0]].tolist(), "-l")
+            for i in gcp.lsFiles(
+                res[bamfilepaths[0]].tolist(),
+                "-l",
+                billing_proj=billing_proj,
+            )
         ]
         table.loc[res.index.tolist(), "crc32c_hash"] = [
-            gcp.extractHash(i) for i in gcp.lsFiles(res[bamfilepaths[0]].tolist(), "-L")
+            gcp.extractHash(i)
+            for i in gcp.lsFiles(
+                res[bamfilepaths[0]].tolist(),
+                "-L",
+                billing_proj=billing_proj,
+            )
         ]
         table.loc[res.index.tolist(), "md5_hash"] = [
             gcp.extractHash(i, typ="md5")
-            for i in gcp.lsFiles(res[bamfilepaths[0]].tolist(), "-L")
+            for i in gcp.lsFiles(
+                res[bamfilepaths[0]].tolist(),
+                "-L",
+                billing_proj=billing_proj,
+            )
         ]
 
     table.loc[samplesinset, ["low_quality", "blacklist", "prioritized"]] = False
@@ -898,6 +912,7 @@ def updateTrackerRNA(
     samplesinset=[],
     starlogs={},
     todrop=[],
+    billing_proj=None,
 ):
     """updates the sample tracker with the new rna samples and the QC metrics
 
@@ -945,6 +960,7 @@ def updateTrackerRNA(
         bamfilepaths=bamfilepaths,
         dry_run=dry_run,
         todrop=todrop,
+        billing_proj=billing_proj,
     )
 
 
@@ -960,6 +976,7 @@ def updateTrackerWGS(
     refworkspace=None,
     bamfilepaths=["internal_bam_filepath", "internal_bai_filepath"],
     dry_run=False,
+    billing_proj=None,
 ):
     """updates the sample tracker with the new wgs samples and the QC metrics
 
@@ -1022,4 +1039,5 @@ def updateTrackerWGS(
         bamfilepaths=bamfilepaths,
         dry_run=dry_run,
         samplesinset=samplesinset,
+        billing_proj=billing_proj,
     )
