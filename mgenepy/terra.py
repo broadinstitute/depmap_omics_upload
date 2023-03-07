@@ -8,6 +8,7 @@ import dalmatian as dm
 def changeToBucket(
     samples,
     gsfolderto,
+    billing_proj=None,
     name_col=None,
     values=["bam", "bai"],
     filetypes=None,
@@ -52,14 +53,21 @@ def changeToBucket(
             name = (
                 name + "." + filetype if catchdup else name + "_" + ran + "." + filetype
             )
-            if not gcp.exists(gsfolderto + name) or not catchdup:
-                cmd = (
-                    "gsutil -u broad-firecloud-ccle cp "
-                    + val[ntype]
-                    + " "
-                    + gsfolderto
-                    + name
-                )
+            if (
+                not gcp.exists(gsfolderto + name, billing_proj=billing_proj)
+                or not catchdup
+            ):
+                cmd = "gsutil cp " + val[ntype] + " " + gsfolderto + name
+                if billing_proj is not None:
+                    cmd = (
+                        "gsutil -u "
+                        + billing_proj
+                        + " cp "
+                        + val[ntype]
+                        + " "
+                        + gsfolderto
+                        + name
+                    )
                 if dryrun:
                     print(cmd)
                     cmds.append(cmd)

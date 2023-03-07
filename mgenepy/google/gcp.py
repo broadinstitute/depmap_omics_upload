@@ -1,14 +1,12 @@
 # GCPFunction.py
 
-from google.cloud import storage
 import os
 import subprocess
 import re
 from genepy.utils import helper as h
-import signal
 
 
-def lsFiles(files, add="", group=50):
+def lsFiles(files, add="", group=50, billing_proj=None):
     """
     list a set of files in parallel (when the set is huge)
 
@@ -25,11 +23,19 @@ def lsFiles(files, add="", group=50):
         a = ""
         for val in sfiles:
             a += val + " "
-        data = subprocess.run(
-            "gsutil -u broad-firecloud-ccle -m ls " + add + " " + a,
-            capture_output=True,
-            shell=True,
-        )
+        data = None
+        if billing_proj is None:
+            data = subprocess.run(
+                "gsutil -m ls " + add + " " + a,
+                capture_output=True,
+                shell=True,
+            )
+        else:
+            data = subprocess.run(
+                "gsutil -u " + billing_proj + " -m ls " + add + " " + a,
+                capture_output=True,
+                shell=True,
+            )
         if data.returncode != 0:
             if "One or more URLs matched no objects" not in str(data.stderr):
                 raise ValueError("issue with the command: " + str(data.stderr))
@@ -66,15 +72,20 @@ def cpFiles(files, location, group=50):
             break
 
 
-def exists(val):
+def exists(val, billing_proj=None):
     """
     tells if a gcp path exists
     """
     if type(val) is str:
-        return (
-            os.popen("gsutil -u broad-firecloud-ccle ls " + val).read().split("\n")[0]
-            == val
-        )
+        if billing_proj is None:
+            return os.popen("gsutil ls " + val).read().split("\n")[0] == val
+        else:
+            return (
+                os.popen("gsutil -u " + billing_proj + " ls " + val)
+                .read()
+                .split("\n")[0]
+                == val
+            )
     elif type(val) is list:
         rest = set(val) - set(lsFiles(val))
         return len(rest) == 0, rest
