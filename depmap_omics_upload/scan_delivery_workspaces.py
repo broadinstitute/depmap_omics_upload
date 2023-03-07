@@ -8,9 +8,9 @@ import logging
 import sys
 
 import tracker as track
-from genepy import sequencing as seq
-from genepy.utils import helper as h
-from genepy.google import gcp
+from mgenepy import sequencing as seq
+from mgenepy.utils import helper as h
+from mgenepy.google import gcp
 
 #####################
 # Loading Functions
@@ -32,6 +32,7 @@ def loadFromMultipleWorkspaces(
     load_undefined=False,
     accept_unknowntypes=True,
     addonly=[],
+    billing_proj=None,
 ):
     """
     Load new RNAseq samples from multiple terra workspace and attempt to map them to existing profiles in gumbo.
@@ -71,6 +72,7 @@ def loadFromMultipleWorkspaces(
             maxage=maxage,
             minsizes_bam=minsizes_bam,
             minsizes_cram=minsizes_cram,
+            billing_proj=billing_proj,
         )
         samples.append(samples_per_ws)
     return pd.concat(samples)
@@ -93,6 +95,7 @@ def loadFromTerraWorkspace(
     maxage="",
     minsizes_bam={},
     minsizes_cram={},
+    billing_proj=None,
 ):
     """
     Load new samples from a terra workspace and attempt to map them to existing profiles in gumbo.
@@ -122,7 +125,7 @@ def loadFromTerraWorkspace(
 
     # check broken bam file paths
     logging.info("checking if there are any broken file paths")
-    foundfiles = gcp.lsFiles(samples_in_ws[bamcol])
+    foundfiles = gcp.lsFiles(samples_in_ws[bamcol], billing_proj=billing_proj)
     broken_bams = set(samples_in_ws[bamcol]) - set(foundfiles)
     logging.warning(
         "These "
@@ -143,6 +146,7 @@ def loadFromTerraWorkspace(
         extract=extract,
         minsizes_bam=minsizes_bam,
         minsizes_cram=minsizes_cram,
+        billing_proj=billing_proj,
     )
     logging.info("generating CDS-ids, annotating source, and renaming columns")
     samples = mapSamples(samples, source, ftype, extract=extract)
@@ -155,6 +159,7 @@ def loadFromTerraWorkspace(
         accept_unknowntypes,
         addonly,
         extract,
+        billing_proj=billing_proj,
     )
     samples = samples[samples[extract["update_time"]] > maxage]
     if len(samples) == 0:
@@ -216,6 +221,7 @@ def extractFromWorkspace(
     extract={},
     minsizes_bam={},
     minsizes_cram={},
+    billing_proj=None,
 ):
     """
     Extract more information from a list of samples found on GP workspaces
@@ -243,9 +249,11 @@ def extractFromWorkspace(
     if extract["legacy_hash"] not in samples.columns or recompute_hash:
         samples[extract["hash"]] = [
             gcp.extractHash(val)
-            for val in gcp.lsFiles(samples[bamcol].tolist(), "-L", 200)
+            for val in gcp.lsFiles(
+                samples[bamcol].tolist(), "-L", 200, billing_proj=billing_proj
+            )
         ]
-    lis = gcp.lsFiles(samples[bamcol].tolist(), "-al", 200)
+    lis = gcp.lsFiles(samples[bamcol].tolist(), "-al", 200, billing_proj=billing_proj)
     if extract["legacy_size"] not in samples.columns or recomputesize:
         samples[extract["legacy_size"]] = [gcp.extractSize(i)[1] for i in lis]
     if extract["update_time"] not in samples.columns or recomputeTime:
@@ -361,6 +369,7 @@ def resolveFromWorkspace(
     accept_unknowntypes=True,
     addonly=[],
     extract={},
+    billing_proj=None,
 ):
     """
     Filters our list by trying to find duplicate in our dataset and remove any sample that isn't tumor
@@ -388,12 +397,16 @@ def resolveFromWorkspace(
     if ftype == "bam":
         sample_size = {
             gcp.extractSize(val)[1]: gcp.extractSize(val)[0]
-            for val in gcp.lsFiles(samples[extract["ref_bam"]].tolist(), "-la")
+            for val in gcp.lsFiles(
+                samples[extract["ref_bam"]].tolist(), "-la", billing_proj=billing_proj
+            )
         }
     else:
         sample_size = {
             gcp.extractSize(val)[1]: gcp.extractSize(val)[0]
-            for val in gcp.lsFiles(samples[extract["ref_cram"]].tolist(), "-la")
+            for val in gcp.lsFiles(
+                samples[extract["ref_cram"]].tolist(), "-la", billing_proj=billing_proj
+            )
         }
     dups_to_remove = [
         sample_size[a]
@@ -463,6 +476,7 @@ if __name__ == "__main__":
             config["minsizes_bam"],
             config["minsizes_cram"],
             bamcol="cram_or_bam_path",
+            billing_proj=config["gcp_billing_proj"],
         )
         rnasamples[rnasamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
             config["loading_workingdir"] + today + "_" + "mappedRNAsamples.csv"
@@ -483,6 +497,7 @@ if __name__ == "__main__":
             config["minsizes_bam"],
             config["minsizes_cram"],
             bamcol="cram_path",
+            billing_proj=config["gcp_billing_proj"],
         )
         wgssamples[wgssamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
             config["loading_workingdir"] + today + "_" + "mappedWGSsamples.csv"
@@ -496,13 +511,14 @@ if __name__ == "__main__":
             config["gumbo_env"],
             config["wesworkspaces"],
             config["extract_defaults"]["sm_id"],
-            {"SMIDOrdered", "sm_id_matched"},
+            {"SMIDOrdered", "SMIDReturned", "sm_id_matched"},
             "wes",
             config["extract_defaults"],
             "2000-01-01",
             config["minsizes_bam"],
             config["minsizes_cram"],
             bamcol="formatted_bam_file",
+            billing_proj=config["gcp_billing_proj"],
         )
         wessamples[wessamples[config["extract_defaults"]["profile_id"]] != ""].to_csv(
             config["loading_workingdir"] + today + "_" + "mappedWESsamples.csv"
