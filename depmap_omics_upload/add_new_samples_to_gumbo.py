@@ -4,7 +4,7 @@ import json
 import pandas as pd
 import datetime
 
-from mgenepy import terra
+from depmap_omics_upload.mgenepy import terra
 from depmap_omics_upload import tracker as track
 
 

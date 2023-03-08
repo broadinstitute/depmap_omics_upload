@@ -1,5 +1,5 @@
-from mgenepy.google import gcp
-from mgenepy.utils import helper as h
+from depmap_omics_upload.mgenepy.google import gcp
+from depmap_omics_upload.mgenepy.utils import helper as h
 import subprocess
 import pandas as pd
 import dalmatian as dm

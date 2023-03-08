@@ -8,9 +8,9 @@ import logging
 import sys
 
 import tracker as track
-from mgenepy import sequencing as seq
-from mgenepy.utils import helper as h
-from mgenepy.google import gcp
+from depmap_omics_upload.mgenepy import sequencing as seq
+from depmap_omics_upload.mgenepy.utils import helper as h
+from depmap_omics_upload.mgenepy.google import gcp
 
 #####################
 # Loading Functions

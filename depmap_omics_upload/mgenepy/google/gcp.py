@@ -3,7 +3,7 @@
 import os
 import subprocess
 import re
-from genepy.utils import helper as h
+from depmap_omics_upload.mgenepy.utils import helper as h
 
 
 def lsFiles(files, add="", group=50, billing_proj=None):

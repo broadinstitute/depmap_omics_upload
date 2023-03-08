@@ -1,10 +1,10 @@
 # tracker.py
-from mgenepy.utils import helper as h
+from depmap_omics_upload.mgenepy.utils import helper as h
 import numpy as np
 import os
 
-from mgenepy import terra
-from mgenepy.google import gcp
+from depmap_omics_upload.mgenepy import terra
+from depmap_omics_upload.mgenepy.google import gcp
 import dalmatian as dm
 import signal
 import gumbo_client
