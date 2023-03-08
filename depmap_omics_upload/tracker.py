@@ -15,7 +15,7 @@ import pkgutil
 
 # loading config
 configdata = pkgutil.get_data(__name__, "config.json")
-config = json.loads(configdata) # pylint: disable=arg-type
+config = json.loads(configdata) # type: ignore
 
 
 # condense all interactions with tracker (for emeril integration)

@@ -11,7 +11,7 @@ import pkgutil
 # loading config
 
 configdata = pkgutil.get_data(__name__, "config.json")
-config = json.loads(configdata)  # pylint: disable=arg-type
+config = json.loads(configdata) # type: ignore
 
 config["latest2fn_nummat_model"] = {
     config["taiga_cn"]: config["virtual_filenames_nummat_cn_model"],
