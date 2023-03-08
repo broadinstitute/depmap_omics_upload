@@ -4,7 +4,7 @@ import json
 import pandas as pd
 import datetime
 
-from genepy import terra
+from depmap_omics_upload.mgenepy import terra
 from depmap_omics_upload import tracker as track
 
 
@@ -16,6 +16,7 @@ def addSamplesToGumbo(
     name_col="index",
     values=["hg19_bam_filepath", "hg19_bai_filepath"],
     filetypes=["bam", "bai"],
+    billing_proj=None,
     dryrun=False,
 ):
     """update the samples on gumbo's sequencing sheet
@@ -34,6 +35,7 @@ def addSamplesToGumbo(
     samples, cmds = terra.changeToBucket(
         samples,
         bucket,
+        billing_proj=billing_proj,
         name_col=name_col,
         values=values,
         filetypes=filetypes,
@@ -89,6 +91,7 @@ if __name__ == "__main__":
             config["wgs_hg38_cram_path"],
             values=["hg38_cram_filepath", "hg38_crai_filepath"],
             filetypes=["cram", "crai"],
+            billing_proj=config["gcp_billing_proj"],
             dryrun=config["dryrun"],
         )
 
@@ -101,5 +104,19 @@ if __name__ == "__main__":
             config["rna_hg19_path"],
             values=["hg19_bam_filepath", "hg19_bai_filepath"],
             filetypes=["bam", "bai"],
+            billing_proj=config["gcp_billing_proj"],
+            dryrun=config["dryrun"],
+        )
+
+    for fn in config["new_wes_sample_tables"]:
+        sampletable = pd.read_csv(fn, index_col=0)
+        addSamplesToGumbo(
+            config["gumbo_env"],
+            sampletable,
+            "wes",
+            config["wes_hg19_bam_path"],
+            values=["hg19_bam_filepath", "hg19_bai_filepath"],
+            filetypes=["bam", "bai"],
+            billing_proj=config["gcp_billing_proj"],
             dryrun=config["dryrun"],
         )

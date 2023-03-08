@@ -2,7 +2,7 @@ from __future__ import print_function
 import pandas as pd
 from datetime import date
 
-from genepy.utils import helper as h
+from depmap_omics_upload.mgenepy.utils import helper as h
 from depmap_omics_upload import tracker as track
 from taigapy import TaigaClient
 import json
@@ -11,7 +11,7 @@ import pkgutil
 # loading config
 
 configdata = pkgutil.get_data(__name__, "config.json")
-config = json.loads(configdata)
+config = json.loads(configdata) # type: ignore
 
 config["latest2fn_nummat_model"] = {
     config["taiga_cn"]: config["virtual_filenames_nummat_cn_model"],
