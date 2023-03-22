@@ -465,11 +465,12 @@ if __name__ == "__main__":
     )
 
     if "rna" in config["datatypes"]:
+        print("loading RNAseq data")
         rnasamples = loadFromMultipleWorkspaces(
             config["gumbo_env"],
             config["rnaworkspaces"],
             config["extract_defaults"]["sm_id"],
-            {"SMIDOrdered", "sm_id_matched"},
+            {"SMIDOrdered", "SMIDReturned", "sm_id_matched"},
             "rna",
             config["extract_defaults"],
             config["maxage"],
@@ -486,11 +487,12 @@ if __name__ == "__main__":
         )
 
     if "wgs" in config["datatypes"]:
+        print("loading WGS data")
         wgssamples = loadFromMultipleWorkspaces(
             config["gumbo_env"],
             config["wgsworkspaces"],
             config["extract_defaults"]["sm_id"],
-            {"SMIDOrdered", "sm_id_matched"},
+            {"SMIDOrdered", "SMIDReturned", "sm_id_matched"},
             "wgs",
             config["extract_defaults"],
             config["maxage"],
@@ -507,6 +509,7 @@ if __name__ == "__main__":
         )
 
     if "wes" in config["datatypes"]:
+        print("loading WES data")
         wessamples = loadFromMultipleWorkspaces(
             config["gumbo_env"],
             config["wesworkspaces"],

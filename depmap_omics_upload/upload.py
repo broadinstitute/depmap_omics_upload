@@ -11,7 +11,7 @@ import pkgutil
 # loading config
 
 configdata = pkgutil.get_data(__name__, "config.json")
-config = json.loads(configdata) # type: ignore
+config = json.loads(configdata)  # type: ignore
 
 config["latest2fn_nummat_model"] = {
     config["taiga_cn"]: config["virtual_filenames_nummat_cn_model"],
@@ -35,6 +35,9 @@ config["latest2fn_table_pr"] = {
     config["taiga_cn"]: config["virtual_filenames_table_cn_pr"],
     config["taiga_fusion"]: config["virtual_filenames_table_fusion_pr"],
     config["taiga_mutation"]: config["virtual_filenames_table_mut_pr"],
+}
+config["latest2fn_raw_pr"] = {
+    config["taiga_mutation"]: config["virtual_filenames_raw_mut_pr"]
 }
 
 
@@ -414,6 +417,7 @@ def uploadPRMatrix(
     pr_col="index",
     folder=config["working_dir"],
     change_desc="",
+    save_format=".csv",
 ):
     """subset, save and upload to taiga PR-level matrix
 
@@ -435,11 +439,11 @@ def uploadPRMatrix(
     print("subsetting ", latest_fn)
     if pr_col == "index":
         subset_mat = to_subset[to_subset.index.isin(prs)]
-        subset_mat.to_csv(folder + virtual_fn + ".csv")
+        subset_mat.to_csv(folder + virtual_fn + save_format)
     else:
         subset_mat = to_subset[to_subset[pr_col].isin(prs)]
         subset_mat = subset_mat.rename(columns={pr_col: "ProfileID"})
-        subset_mat.to_csv(folder + virtual_fn + ".csv", index=False)
+        subset_mat.to_csv(folder + virtual_fn + save_format, index=False)
 
     print("uploading ", virtual_fn, " to virtual")
     tc.update_dataset(
@@ -447,7 +451,7 @@ def uploadPRMatrix(
         changes_description=change_desc,
         upload_files=[
             {
-                "path": folder + virtual_fn + ".csv",
+                "path": folder + virtual_fn + save_format,
                 "name": virtual_fn,
                 "format": matrix_format,
                 "encoding": "utf-8",
@@ -632,6 +636,7 @@ def makePRLvMatrices(
     files_nummat=config["latest2fn_nummat_pr"],
     folder=config["working_dir"] + config["sampleset"],
     files_table=config["latest2fn_table_pr"],
+    files_raw=config["latest2fn_raw_pr"],
     today=None,
     sampleid=config["sample_id"],
 ):
@@ -671,6 +676,20 @@ def makePRLvMatrices(
                     pr_col=sampleid,
                     folder=folder + "/",
                     change_desc="adding " + virtual,
+                )
+        for latest_id, fn_dict in files_raw.items():
+            for latest, virtual in fn_dict.items():
+                uploadPRMatrix(
+                    prs_to_release,
+                    latest_id,
+                    virtual_ids[portal],
+                    latest,
+                    virtual,
+                    "Raw",
+                    pr_col=sampleid,
+                    folder=folder + "/",
+                    change_desc="adding " + virtual,
+                    save_format=".txt",
                 )
 
 

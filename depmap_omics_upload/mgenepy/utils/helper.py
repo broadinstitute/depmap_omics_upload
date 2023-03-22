@@ -6,6 +6,7 @@ from biomart import BiomartServer
 import io
 import random
 import string
+import itertools
 
 prevshowcount = 100
 
@@ -207,3 +208,16 @@ def randomString(stringLength=6, stype="all", withdigits=True):
     if withdigits:
         lettersAndDigits += string.digits
     return "".join(random.choice(lettersAndDigits) for i in range(stringLength))
+
+
+def grouped(iterable, n):
+    """
+    iterate over element of list 2 at a time python
+    s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ...
+    """
+    it = iter(iterable)
+    while True:
+        chunk = tuple(itertools.islice(it, n))
+        if not chunk:
+            return
+        yield chunk

@@ -1,17 +1,19 @@
 {
     "dryrun": false,
     "sampleset": "22Q4",
-    "gumbo_env": "staging",
+    "gumbo_env": "production",
     "gumbo_client_username": "szhang",
+    "gcp_billing_proj": "broad-firecloud-ccle",
+    "creds": "~/bin/.credentials.json",
     "datatypes": [
-        "wgs"
+        "wgs",
+        "rna"
     ],
     "working_dir": "output/",
     "loading_workingdir": "output/loaded_samples/",
-    "new_wgs_sample_tables": [
-        "/home/xiaomeng/bin/depmap_omics_upload/depmap_omics_upload/loaded_samples/WGStest.csv"
-    ],
+    "new_wgs_sample_tables": [],
     "new_rna_sample_tables": [],
+    "new_wes_sample_tables": [],
     "extract_defaults": {
         "name": "sample_alias",
         "bai": "crai_or_bai_path",
@@ -115,11 +117,6 @@
         "Datatype",
         "Baits"
     ],
-    "virtual_filenames_guidemut": {
-        "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
-        "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
-        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne"
-    },
     "virtual_filenames_nummat_exp_model": {
         "proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1",
         "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichment"
@@ -172,6 +169,9 @@
         "somaticMutations_profile": "OmicsSomaticMutationsProfile",
         "structuralVariants_profile": "OmicsStructuralVariantsProfile"
     },
+    "virtual_filenames_raw_mut_pr": {
+        "somaticMutations_profile_maf": "OmicsSomaticMutationsMAFProfile"
+    },
     "virtual": {
         "internal": "",
         "dmc": "",
@@ -205,11 +205,6 @@
         [
             "DEPMAP",
             "terra-broad-cancer-prod/CCLE_DepMap_RNAseq",
-            "bam"
-        ],
-        [
-            "IBM",
-            "terra-broad-cancer-prod/Getz_IBM_CellLines_RNASeqData",
             "bam"
         ]
     ]
