@@ -134,3 +134,55 @@ def extractHash(val, typ="crc32c"):
         )
     else:
         return None
+
+def mvFiles(files, location, group=50, listen_to_errors=False, billing_proj=None):
+    """
+    move a set of files in parallel (when the set is huge)
+
+    Args:
+    ----
+        files: gs paths
+        location: to move the files to
+        group: files to do in parallel
+    """
+    by = len(files) if len(files) < group else group
+    prefix = ""
+    if billing_proj is not None:
+        prefix = "-u " + billing_proj + " "
+    for sfiles in h.grouped(files, by):
+        a = ''
+        for val in sfiles:
+            a += val + ' '
+        code = os.system("gsutil " + prefix + "-m mv " + a + location)
+        if code != 0 and listen_to_errors:
+            print('pressed ctrl+c or command failed')
+            break
+
+def get_all_sizes(folder, suffix='*'):
+    """
+    will sort and list all the files by their sizes. 
+
+    If some files have the same size, will list them together
+
+    Args:
+    ----
+            folder: gs folder path
+            suffix: of a specific file type
+
+    Returns:
+    -------
+            dict(sizes:[paths])
+    """
+    samples = os.popen('gsutil -m ls -al ' + folder + '**.' + suffix).read().split('\n')
+    # compute size filepath
+    sizes = {'gs://' + val.split('gs://')[1].split('#')[0]: int(re.split("\d{4}-\d{2}-\d{2}", val)[0]) for val in samples[:-2]}
+    names = {}
+    for k, val in sizes.items():
+        if val in names:
+            names[val].append(k)
+        else:
+            names[val] = [k]
+    if names == {}:
+        # we didn't find any valid file paths
+        print("We didn't find any valid file paths in folder: " + str(folder))
+    return names
