@@ -259,7 +259,7 @@ class SampleTracker:
         pr_table = self.read_pr_table()
         blacklist = [i for i in refdata["blacklist"].values.tolist() if i == 1]
         blacklisted = set(blacklist) & set(samples)
-        print("we have " + str(len(blacklist)) + " files blacklisted for low quality")
+        print("we have " + str(len(blacklisted)) + " files blacklisted for low quality")
         if len(blacklisted):
             print("these lines are blacklisted " + str(blacklisted))
             if raise_error:
@@ -271,7 +271,7 @@ class SampleTracker:
         for s in samples:
             pr_id = refdata.loc[s, "ProfileID"]
             release_date = pr_table.loc[pr_id, "InternalReleaseDate"]
-            today = str(date.today())
+            today = date.today()
             if release_date == "" or release_date > today:
                 embargoed.append(s)
 

@@ -418,6 +418,7 @@ def uploadPRMatrix(
     folder=config["working_dir"],
     change_desc="",
     save_format=".csv",
+    save_sep=","
 ):
     """subset, save and upload to taiga PR-level matrix
 
@@ -440,10 +441,13 @@ def uploadPRMatrix(
     if pr_col == "index":
         subset_mat = to_subset[to_subset.index.isin(prs)]
         subset_mat.to_csv(folder + virtual_fn + save_format)
+    elif pr_col == "Tumor_Sample_Barcode":
+        subset_mat = to_subset[to_subset[pr_col].isin(prs)]
+        subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
     else:
         subset_mat = to_subset[to_subset[pr_col].isin(prs)]
         subset_mat = subset_mat.rename(columns={pr_col: "ProfileID"})
-        subset_mat.to_csv(folder + virtual_fn + save_format, index=False)
+        subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
 
     print("uploading ", virtual_fn, " to virtual")
     tc.update_dataset(
@@ -686,10 +690,11 @@ def makePRLvMatrices(
                     latest,
                     virtual,
                     "Raw",
-                    pr_col=sampleid,
+                    pr_col="Tumor_Sample_Barcode",
                     folder=folder + "/",
                     change_desc="adding " + virtual,
-                    save_format=".txt",
+                    save_format=".maf",
+                    save_sep="\t",
                 )
 
 
