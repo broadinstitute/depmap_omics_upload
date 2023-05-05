@@ -6,7 +6,6 @@
     "gcp_billing_proj": "broad-firecloud-ccle",
     "creds": "~/bin/.credentials.json",
     "datatypes": [
-        "wgs",
         "rna"
     ],
     "working_dir": "output/",
@@ -53,7 +52,9 @@
         "root_sample_id": "root_sample_id",
         "sm_id": "SmId",
         "profile_id": "ProfileID",
-        "expected_type": "expected_type"
+        "expected_type": "expected_type",
+        "blacklist": "blacklist",
+        "issue": "issue"
     },
     "starbamcolterra": [
         "internal_bam_filepath",
@@ -193,11 +194,6 @@
         [
             "DEPMAP",
             "broad-genomics-data/DepMap_WGS",
-            "cram"
-        ],
-        [
-            "PRISM",
-            "broad-genomics-data/Broad_PRISM_Jacob_Smigiel_4_21_2022",
             "cram"
         ]
     ],

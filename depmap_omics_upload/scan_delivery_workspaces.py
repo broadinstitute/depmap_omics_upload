@@ -35,7 +35,7 @@ def loadFromMultipleWorkspaces(
     billing_proj=None,
 ):
     """
-    Load new RNAseq samples from multiple terra workspace and attempt to map them to existing profiles in gumbo.
+    Load new samples from multiple terra workspace and attempt to map them to existing profiles in gumbo.
 
     Args:
     -----
@@ -75,7 +75,25 @@ def loadFromMultipleWorkspaces(
             billing_proj=billing_proj,
         )
         samples.append(samples_per_ws)
-    return pd.concat(samples)
+    samples = pd.concat(samples)
+    samples[extract["blacklist"]] = False
+    samples[extract["issue"]] = pd.NA
+    for k, val in samples.iterrows():
+        if ftype == "bam":
+            if val[extract["legacy_size"]] < minsizes_bam[stype]:
+                logging.warning(
+                    "too small size, blacklisting sample: " + str(val[extract["sm_id"]])
+                )
+                samples.loc[k, extract["blacklist"]] = True
+                samples.loc[k, extract["issue"]] = "bam too small"
+        elif ftype == "cram":
+            if val[extract["legacy_size"]] < minsizes_cram[stype]:
+                logging.warning(
+                    "too small size, blacklisting sample: " + str(val[extract["sm_id"]])
+                )
+                samples.loc[k, extract["blacklist"]] = True
+                samples.loc[k, extract["issue"]] = "bam too small"
+    return samples
 
 
 def loadFromTerraWorkspace(
@@ -199,11 +217,8 @@ def loadFromTerraWorkspace(
                 samples.loc[k, extract["profile_id"]] = pr_id[0]
     if len(mult_to_one_prs) > 0:
         logging.warning(
-            "The following validation ids have multiple PRs associated with them:"
-        )
-        logging.warning(str(mult_to_one_prs))
-        raise ValueError(
-            "multiple profile ids mapped to the same validation id. check with ops!"
+            "The following validation ids have multiple PRs associated with them: "
+            + str(mult_to_one_prs)
         )
 
     return samples
@@ -258,23 +273,6 @@ def extractFromWorkspace(
         samples[extract["legacy_size"]] = [gcp.extractSize(i)[1] for i in lis]
     if extract["update_time"] not in samples.columns or recomputeTime:
         samples[extract["update_time"]] = [gcp.extractTime(i) for i in lis]
-    todrop = []
-    for k, val in samples.iterrows():
-        if ftype == "bam":
-            if val[extract["legacy_size"]] < minsizes_bam[stype]:
-                todrop.append(k)
-                logging.warning(
-                    "too small size, removing sample: "
-                    + str(val[extract["root_sample_id"]])
-                )
-        elif ftype == "cram":
-            if val[extract["legacy_size"]] < minsizes_cram[stype]:
-                todrop.append(k)
-                logging.warning(
-                    "too small size, removing sample: "
-                    + str(val[extract["root_sample_id"]])
-                )
-    samples = samples.drop(index=todrop)
     # getting the date released
     if len(samples) == 0:
         return None
@@ -461,7 +459,6 @@ if __name__ == "__main__":
         + "_"
         + "-".join(config["datatypes"])
         + ".log",
-        level=logging.INFO,
     )
 
     if "rna" in config["datatypes"]:
