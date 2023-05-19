@@ -36,6 +36,8 @@ class SampleTracker:
         self.pr_table_index = config["pr_table_index"]
         self.seq_table_index = config["seq_table_index"]
         self.sample_table_name = config["sample_table_name"]
+        self.screen_table_name = config["screen_table_name"]
+        self.screen_table_index = config["screen_table_index"]
         # prod env for gumbo
         self.client = gumbo_client.Client(username=config["gumbo_client_username"])
         if gumbo_env == "staging":
@@ -79,6 +81,14 @@ class SampleTracker:
         )
         seq_table_camel = seq_table_camel.set_index(self.seq_table_index)
         return seq_table_camel
+    
+    def read_screen_table(self):
+        screen_table = self.client.get(self.screen_table_name)
+        screen_table_camel = self.mapping_utils.rename_columns(
+            self.screen_table_name, screen_table
+        )
+        screen_table_camel = screen_table_camel.set_index(self.screen_table_index)
+        return screen_table_camel
 
     def write_mc_table(self, df):
         # assumes df's columns are camelCase, and converts it back to snake_case
