@@ -101,6 +101,8 @@
     "sample_table_name": "sample",
     "screen_table_name": "screen",
     "screen_table_index": "ScreenID",
+    "str_table_name": "str_profile",
+    "str_table_index": "id",
     "ach_choice_table_name": "achilles_choice_table",
     "ach_choice_table_cols": [
         "ModelConditionID",
