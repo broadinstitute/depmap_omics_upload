@@ -1,12 +1,12 @@
 {
     "dryrun": false,
     "sampleset": "22Q4",
-    "gumbo_env": "staging",
+    "gumbo_env": "production",
     "gumbo_client_username": "szhang",
     "gcp_billing_proj": "broad-firecloud-ccle",
     "creds": "~/bin/.credentials.json",
     "datatypes": [
-        "wgs"
+        "wgs", "rna"
     ],
     "working_dir": "output/",
     "loading_workingdir": "output/loaded_samples/",
@@ -101,6 +101,8 @@
     "sample_table_name": "sample",
     "screen_table_name": "screen",
     "screen_table_index": "ScreenID",
+    "str_table_name": "str_profile",
+    "str_table_index": "id",
     "ach_choice_table_name": "achilles_choice_table",
     "ach_choice_table_cols": [
         "ModelConditionID",
@@ -155,7 +157,8 @@
         "genes_expectedCount_profile": "OmicsExpressionGenesExpectedCountProfile",
         "transcripts_expectedCount_profile": "OmicsExpressionTranscriptsExpectedCountProfile",
         "transcripts_tpm_logp1_profile": "OmicsExpressionTranscriptsTPMLogp1Profile",
-        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile"
+        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile",
+        "genes_tpm_logp1_profile": "OmicsExpressionAllGenesTPMLogp1Profile"
     },
     "virtual_filenames_nummat_cn_pr": {
         "globalGenomicFeatures_profile": "OmicsSignaturesProfile"
@@ -204,6 +207,11 @@
         [
             "DEPMAP",
             "terra-broad-cancer-prod/CCLE_DepMap_RNAseq",
+            "bam"
+        ],
+        [
+            "IBM",
+            "terra-broad-cancer-prod/Getz_IBM_CellLines_RNASeqData",
             "bam"
         ]
     ]
