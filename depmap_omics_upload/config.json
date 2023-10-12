@@ -1,6 +1,6 @@
 {
     "dryrun": false,
-    "sampleset": "22Q4",
+    "sampleset": "23Q4",
     "gumbo_env": "production",
     "gumbo_client_username": "szhang",
     "gcp_billing_proj": "broad-firecloud-ccle",
@@ -10,7 +10,7 @@
     ],
     "working_dir": "output/",
     "loading_workingdir": "output/loaded_samples/",
-    "new_wgs_sample_tables": ["/home/xiaomeng/bin/depmap_omics_upload/output/loaded_samples/2023-05-15_17-55-45_mappedWGSsamples.csv"],
+    "new_wgs_sample_tables": ["/home/xiaomeng/bin/depmap_omics_upload/depmap_omics_upload/output/loaded_samples/2023-09-19_12-44-18_mappedWGSsamples.csv"],
     "new_rna_sample_tables": [],
     "new_wes_sample_tables": [],
     "extract_defaults": {
@@ -130,7 +130,8 @@
         "merged_gene_cn_profile": "OmicsCNGene",
         "merged_absolute_gene_cn_profile": "OmicsAbsoluteCNGene",
         "merged_loh_profile": "OmicsLoH",
-        "globalGenomicFeatures_profile": "OmicsSignatures"
+        "globalGenomicFeatures_profile": "OmicsSignatures",
+        "armLevelCNA_profile": "OmicsArmLevelCNA"
     },
     "virtual_filenames_nummat_mut_model": {
         "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
@@ -158,10 +159,12 @@
         "transcripts_expectedCount_profile": "OmicsExpressionTranscriptsExpectedCountProfile",
         "transcripts_tpm_logp1_profile": "OmicsExpressionTranscriptsTPMLogp1Profile",
         "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile",
-        "genes_tpm_logp1_profile": "OmicsExpressionAllGenesTPMLogp1Profile"
+        "genes_tpm_logp1_profile": "OmicsExpressionAllGenesTPMLogp1Profile",
+        "genes_effectiveLength_profile": "OmicsExpressionAllGenesEffectiveLengthProfile"
     },
     "virtual_filenames_nummat_cn_pr": {
-        "globalGenomicFeatures_profile": "OmicsSignaturesProfile"
+        "globalGenomicFeatures_profile": "OmicsSignaturesProfile",
+        "armLevelCNA_profile": "OmicsArmLevelCNAProfile",
     },
     "virtual_filenames_nummat_mut_pr": {},
     "virtual_filenames_germline_pr": {},
