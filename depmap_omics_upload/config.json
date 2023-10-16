@@ -164,7 +164,7 @@
     },
     "virtual_filenames_nummat_cn_pr": {
         "globalGenomicFeatures_profile": "OmicsSignaturesProfile",
-        "armLevelCNA_profile": "OmicsArmLevelCNAProfile",
+        "armLevelCNA_profile": "OmicsArmLevelCNAProfile"
     },
     "virtual_filenames_nummat_mut_pr": {},
     "virtual_filenames_germline_pr": {},
