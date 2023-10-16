@@ -79,11 +79,12 @@ def getPRToRelease(
                 & (prs_with_date.ProfileSource != "taiga")
                 & (~prs_with_date.MainSequencingID.isnull())
             ].index.tolist()
-    assert (
-        len(set(prs["dmc"]) - set(prs["internal"])) == 0
-    ), "Lines with DMC release dates missing internal release dates: " + str(
-        set(prs["dmc"]) - set(prs["internal"])
-    )
+    if "dmc" in portals and "internal" in portals:
+        assert (
+            len(set(prs["dmc"]) - set(prs["internal"])) == 0
+        ), "Lines with DMC release dates missing internal release dates: " + str(
+            set(prs["dmc"]) - set(prs["internal"])
+        )
     return prs
 
 
@@ -418,7 +419,7 @@ def uploadPRMatrix(
     folder=config["working_dir"],
     change_desc="",
     save_format=".csv",
-    save_sep=","
+    save_sep=",",
 ):
     """subset, save and upload to taiga PR-level matrix
 
