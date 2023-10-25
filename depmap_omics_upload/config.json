@@ -6,11 +6,14 @@
     "gcp_billing_proj": "broad-firecloud-ccle",
     "creds": "~/bin/.credentials.json",
     "datatypes": [
-        "wgs", "rna"
+        "wgs",
+        "rna"
     ],
     "working_dir": "output/",
     "loading_workingdir": "output/loaded_samples/",
-    "new_wgs_sample_tables": ["/home/xiaomeng/bin/depmap_omics_upload/depmap_omics_upload/output/loaded_samples/2023-09-19_12-44-18_mappedWGSsamples.csv"],
+    "new_wgs_sample_tables": [
+        "/home/xiaomeng/bin/depmap_omics_upload/depmap_omics_upload/output/loaded_samples/2023-09-19_12-44-18_mappedWGSsamples.csv"
+    ],
     "new_rna_sample_tables": [],
     "new_wes_sample_tables": [],
     "extract_defaults": {
@@ -135,8 +138,7 @@
     },
     "virtual_filenames_nummat_mut_model": {
         "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
-        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging",
-        "somaticMutations_genotypedMatrix_driver_profile": "OmicsSomaticMutationsMatrixDriver"
+        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging"
     },
     "virtual_filenames_germline_model": {
         "binary_germline_mutation": "OmicsGuideMutationsBinaryAvana"
