@@ -79,11 +79,12 @@ def getPRToRelease(
                 & (prs_with_date.ProfileSource != "taiga")
                 & (~prs_with_date.MainSequencingID.isnull())
             ].index.tolist()
-    assert (
-        len(set(prs["dmc"]) - set(prs["internal"])) == 0
-    ), "Lines with DMC release dates missing internal release dates: " + str(
-        set(prs["dmc"]) - set(prs["internal"])
-    )
+    if "dmc" in portals and "internal" in portals:
+        assert (
+            len(set(prs["dmc"]) - set(prs["internal"])) == 0
+        ), "Lines with DMC release dates missing internal release dates: " + str(
+            set(prs["dmc"]) - set(prs["internal"])
+        )
     return prs
 
 
@@ -418,7 +419,7 @@ def uploadPRMatrix(
     folder=config["working_dir"],
     change_desc="",
     save_format=".csv",
-    save_sep=","
+    save_sep=",",
 ):
     """subset, save and upload to taiga PR-level matrix
 
@@ -436,6 +437,14 @@ def uploadPRMatrix(
     print("loading ", latest_fn, " from latest")
     tc = TaigaClient()
     to_subset = tc.get(name=taiga_latest, file=latest_fn)
+
+    if "EntrezGeneID" in set(to_subset.columns):
+        print("making sure Entrez column is Int64")
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].fillna(0)
+        to_subset["EntrezGeneID"] = (
+            to_subset["EntrezGeneID"].astype("Int64").astype(str)
+        )
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].replace({"0": ""})
 
     print("subsetting ", latest_fn)
     if pr_col == "index":
@@ -493,6 +502,14 @@ def uploadModelMatrix(
     print("loading ", latest_fn, " from latest")
     tc = TaigaClient()
     to_subset = tc.get(name=taiga_latest, file=latest_fn)
+
+    if "EntrezGeneID" in set(to_subset.columns):
+        print("making sure Entrez column is Int64")
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].fillna(0)
+        to_subset["EntrezGeneID"] = (
+            to_subset["EntrezGeneID"].astype("Int64").astype(str)
+        )
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].replace({"0": ""})
 
     print("subsetting ", latest_fn)
     if pr_col == "index":
