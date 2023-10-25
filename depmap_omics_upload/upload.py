@@ -438,6 +438,14 @@ def uploadPRMatrix(
     tc = TaigaClient()
     to_subset = tc.get(name=taiga_latest, file=latest_fn)
 
+    if "EntrezGeneID" in set(to_subset.columns):
+        print("making sure Entrez column is Int64")
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].fillna(0)
+        to_subset["EntrezGeneID"] = (
+            to_subset["EntrezGeneID"].astype("Int64").astype(str)
+        )
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].replace({"0": ""})
+
     print("subsetting ", latest_fn)
     if pr_col == "index":
         subset_mat = to_subset[to_subset.index.isin(prs)]
@@ -494,6 +502,14 @@ def uploadModelMatrix(
     print("loading ", latest_fn, " from latest")
     tc = TaigaClient()
     to_subset = tc.get(name=taiga_latest, file=latest_fn)
+
+    if "EntrezGeneID" in set(to_subset.columns):
+        print("making sure Entrez column is Int64")
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].fillna(0)
+        to_subset["EntrezGeneID"] = (
+            to_subset["EntrezGeneID"].astype("Int64").astype(str)
+        )
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].replace({"0": ""})
 
     print("subsetting ", latest_fn)
     if pr_col == "index":
