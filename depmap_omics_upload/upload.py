@@ -776,15 +776,18 @@ def updateEternal(
     """update taiga eternal dataset by linking to latest virtual internal dataset"""
     latest_version = findLatestVersion(virtual["internal"])
 
-    files = [
-        config["virtual_filenames_nummat_exp"].values()
-        + config["virtual_filenames_nummat_cn"].values()
-        + config["virtual_filenames_nummat_mut"].values()
-        + config["virtual_filenames_germline"].values()
-        + config["virtual_filenames_table_fusion"].values()
-        + config["virtual_filenames_table_cn"].values()
-        + config["virtual_filenames_table_mut"].values()
-    ]
+    files = (list(config["virtual_filenames_nummat_exp_model"].values())
+    + list(config["virtual_filenames_nummat_exp_pr"].values())
+    + list(config["virtual_filenames_nummat_cn_model"].values())
+    + list(config["virtual_filenames_nummat_cn_pr"].values())
+    + list(config["virtual_filenames_nummat_mut_model"].values())
+    + list(config["virtual_filenames_guidemut"].values())
+    + list(config["virtual_filenames_table_fusion_model"].values())
+    + list(config["virtual_filenames_table_fusion_pr"].values())
+    + list(config["virtual_filenames_table_cn_pr"].values())
+    + list(config["virtual_filenames_table_mut_model"].values())
+    + list(config["virtual_filenames_table_mut_pr"].values())
+    + list(config["virtual_filenames_raw_mut_pr"].values()))
 
     tc = TaigaClient()
     tc.update_dataset(
