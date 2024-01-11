@@ -1,6 +1,6 @@
 {
     "dryrun": false,
-    "sampleset": "22Q4",
+    "sampleset": "23Q4",
     "gumbo_env": "staging",
     "gumbo_client_username": "szhang",
     "gcp_billing_proj": "broad-firecloud-ccle",
@@ -10,7 +10,9 @@
     ],
     "working_dir": "output/",
     "loading_workingdir": "output/loaded_samples/",
-    "new_wgs_sample_tables": ["/home/xiaomeng/bin/depmap_omics_upload/output/loaded_samples/2023-05-15_17-55-45_mappedWGSsamples.csv"],
+    "new_wgs_sample_tables": [
+        "/home/xiaomeng/bin/depmap_omics_upload/output/loaded_samples/2023-05-15_17-55-45_mappedWGSsamples.csv"
+    ],
     "new_rna_sample_tables": [],
     "new_wes_sample_tables": [],
     "extract_defaults": {
@@ -132,8 +134,7 @@
     },
     "virtual_filenames_nummat_mut_model": {
         "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
-        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging",
-        "somaticMutations_genotypedMatrix_driver_profile": "OmicsSomaticMutationsMatrixDriver"
+        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging"
     },
     "virtual_filenames_germline_model": {
         "binary_germline_mutation": "OmicsGuideMutationsBinaryAvana"
@@ -180,6 +181,13 @@
         "internal": "",
         "dmc": "",
         "public": ""
+    },
+    "exclude": {
+        "internal": [],
+        "dmc": [],
+        "public": [
+            "structuralVariants_profile"
+        ]
     },
     "taiga_expression": "expression-d035",
     "taiga_cn": "cn-latest-d8d4",

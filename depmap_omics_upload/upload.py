@@ -79,11 +79,12 @@ def getPRToRelease(
                 & (prs_with_date.ProfileSource != "taiga")
                 & (~prs_with_date.MainSequencingID.isnull())
             ].index.tolist()
-    assert (
-        len(set(prs["dmc"]) - set(prs["internal"])) == 0
-    ), "Lines with DMC release dates missing internal release dates: " + str(
-        set(prs["dmc"]) - set(prs["internal"])
-    )
+    if "dmc" in portals and "internal" in portals:
+        assert (
+            len(set(prs["dmc"]) - set(prs["internal"])) == 0
+        ), "Lines with DMC release dates missing internal release dates: " + str(
+            set(prs["dmc"]) - set(prs["internal"])
+        )
     return prs
 
 
@@ -643,6 +644,7 @@ def makePRLvMatrices(
     files_raw=config["latest2fn_raw_pr"],
     today=None,
     sampleid=config["sample_id"],
+    exclude=config["exclude"],
 ):
     """for each portal, save and upload profile-indexed data matrices
 
@@ -657,45 +659,48 @@ def makePRLvMatrices(
         print("uploading profile-level matrices to ", portal)
         for latest_id, fn_dict in files_nummat.items():
             for latest, virtual in fn_dict.items():
-                uploadPRMatrix(
-                    prs_to_release,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "NumericMatrixCSV",
-                    pr_col="index",
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                )
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "NumericMatrixCSV",
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                    )
         for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
-                uploadPRMatrix(
-                    prs_to_release,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "TableCSV",
-                    pr_col=sampleid,
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                )
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "TableCSV",
+                        pr_col=sampleid,
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                    )
         for latest_id, fn_dict in files_raw.items():
             for latest, virtual in fn_dict.items():
-                uploadPRMatrix(
-                    prs_to_release,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "Raw",
-                    pr_col="Tumor_Sample_Barcode",
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                    save_format=".maf",
-                    save_sep="\t",
-                )
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "Raw",
+                        pr_col="Tumor_Sample_Barcode",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                        save_format=".maf",
+                        save_sep="\t",
+                    )
 
 
 def makeModelLvMatrices(
@@ -706,6 +711,7 @@ def makeModelLvMatrices(
     upload_guide_matrices=True,
     today=None,
     sampleid=config["sample_id"],
+    exclude=config["exclude"],
 ):
     """for each portal, save and upload profile-indexed data matrices
 
@@ -723,30 +729,32 @@ def makeModelLvMatrices(
         print("uploading model-level matrices to", portal)
         for latest_id, fn_dict in files_nummat.items():
             for latest, virtual in fn_dict.items():
-                uploadModelMatrix(
-                    pr2model_dict,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "NumericMatrixCSV",
-                    pr_col="index",
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                )
+                if latest not in exclude[portal]:
+                    uploadModelMatrix(
+                        pr2model_dict,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "NumericMatrixCSV",
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                    )
         for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
-                uploadModelMatrix(
-                    pr2model_dict,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "TableCSV",
-                    pr_col=sampleid,
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                )
+                if latest not in exclude[portal]:
+                    uploadModelMatrix(
+                        pr2model_dict,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "TableCSV",
+                        pr_col=sampleid,
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                    )
         if upload_guide_matrices:
             uploadBinaryGuideMutationMatrixModel(
                 pr2model_dict, portal, taiga_virtual=virtual_ids[portal]
