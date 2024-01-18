@@ -189,6 +189,13 @@
         "dmc": "",
         "public": ""
     },
+    "exclude": {
+        "internal": [],
+        "dmc": [],
+        "public": [
+            "structuralVariants_profile"
+        ]
+    },
     "taiga_expression": "expression-d035",
     "taiga_cn": "cn-latest-d8d4",
     "taiga_mutation": "mutations-latest-ed72",
