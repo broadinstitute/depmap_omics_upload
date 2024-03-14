@@ -1058,7 +1058,7 @@ def updateTrackerWGS(
             tracker.loc[k, "bam_qc"] = str(v) + "," + a
     if type(datatype) is str:
         datatype = [datatype]
-    update(
+    return update(
         tracker,
         samplesetname,
         lowqual,
