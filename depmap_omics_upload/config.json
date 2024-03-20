@@ -10,7 +10,9 @@
     ],
     "working_dir": "output/",
     "loading_workingdir": "output/loaded_samples/",
-    "new_wgs_sample_tables": ["/home/xiaomeng/bin/depmap_omics_upload/output/loaded_samples/2023-05-15_17-55-45_mappedWGSsamples.csv"],
+    "new_wgs_sample_tables": [
+        "/home/xiaomeng/bin/depmap_omics_upload/output/loaded_samples/2023-05-15_17-55-45_mappedWGSsamples.csv"
+    ],
     "new_rna_sample_tables": [],
     "new_wes_sample_tables": [],
     "extract_defaults": {
@@ -155,7 +157,8 @@
         "genes_expectedCount_profile": "OmicsExpressionGenesExpectedCountProfile",
         "transcripts_expectedCount_profile": "OmicsExpressionTranscriptsExpectedCountProfile",
         "transcripts_tpm_logp1_profile": "OmicsExpressionTranscriptsTPMLogp1Profile",
-        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile"
+        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile",
+        "rnaseqc_count_mat_profile": "OmicsExpressionRNASeQCGeneCountProfile"
     },
     "virtual_filenames_nummat_cn_pr": {
         "globalGenomicFeatures_profile": "OmicsSignaturesProfile"
