@@ -158,6 +158,8 @@
         "transcripts_expectedCount_profile": "OmicsExpressionTranscriptsExpectedCountProfile",
         "transcripts_tpm_logp1_profile": "OmicsExpressionTranscriptsTPMLogp1Profile",
         "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile",
+        "genes_tpm_logp1_profile": "OmicsExpressionAllGenesTPMLogp1Profile",
+        "genes_effectiveLength_profile": "OmicsExpressionAllGenesEffectiveLengthProfile",
         "rnaseqc_count_mat_profile": "OmicsExpressionRNASeQCGeneCountProfile"
     },
     "virtual_filenames_nummat_cn_pr": {
