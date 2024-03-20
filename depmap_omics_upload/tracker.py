@@ -38,6 +38,8 @@ class SampleTracker:
         self.sample_table_name = config["sample_table_name"]
         self.screen_table_name = config["screen_table_name"]
         self.screen_table_index = config["screen_table_index"]
+        self.str_table_name = config["str_table_name"]
+        self.str_table_index = config["str_table_index"]
         # prod env for gumbo
         self.client = gumbo_client.Client(username=config["gumbo_client_username"])
         if gumbo_env == "staging":
@@ -89,6 +91,11 @@ class SampleTracker:
         )
         screen_table_camel = screen_table_camel.set_index(self.screen_table_index)
         return screen_table_camel
+    
+    def read_str_table(self):
+        str_table = self.client.get(self.str_table_name)
+        str_table = str_table.set_index(self.str_table_index)
+        return str_table
 
     def write_mc_table(self, df):
         # assumes df's columns are camelCase, and converts it back to snake_case
@@ -118,6 +125,12 @@ class SampleTracker:
         self.client.update(self.seq_table_name, df)
         self.client.commit()
 
+    def write_str_table(self, df):
+        df.index.name = self.str_table_index
+        df = df.reset_index(level=0)
+        self.client.update(self.str_table_name, df)
+        self.client.commit()
+
     def insert_to_seq_table(self, df):
         df.index.name = self.seq_table_index
         df = df.reset_index(level=0)
@@ -125,6 +138,12 @@ class SampleTracker:
             self.seq_table_name, df, convert_to_custom_names=False, inplace=True
         )
         self.client.insert_only(self.seq_table_name, df)
+        self.client.commit()
+    
+    def insert_to_str_table(self, df):
+        df.index.name = self.str_table_index
+        df = df.reset_index(level=0)
+        self.client.insert_only(self.str_table_name, df)
         self.client.commit()
 
     def get_participant_id(self, seqid, seq_table, pr_table, mc_table, model_table):
@@ -1039,7 +1058,7 @@ def updateTrackerWGS(
             tracker.loc[k, "bam_qc"] = str(v) + "," + a
     if type(datatype) is str:
         datatype = [datatype]
-    update(
+    return update(
         tracker,
         samplesetname,
         lowqual,

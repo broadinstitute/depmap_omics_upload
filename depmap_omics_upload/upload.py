@@ -79,11 +79,12 @@ def getPRToRelease(
                 & (prs_with_date.ProfileSource != "taiga")
                 & (~prs_with_date.MainSequencingID.isnull())
             ].index.tolist()
-    assert (
-        len(set(prs["dmc"]) - set(prs["internal"])) == 0
-    ), "Lines with DMC release dates missing internal release dates: " + str(
-        set(prs["dmc"]) - set(prs["internal"])
-    )
+    if "dmc" in portals and "internal" in portals:
+        assert (
+            len(set(prs["dmc"]) - set(prs["internal"])) == 0
+        ), "Lines with DMC release dates missing internal release dates: " + str(
+            set(prs["dmc"]) - set(prs["internal"])
+        )
     return prs
 
 
@@ -418,7 +419,7 @@ def uploadPRMatrix(
     folder=config["working_dir"],
     change_desc="",
     save_format=".csv",
-    save_sep=","
+    save_sep=",",
 ):
     """subset, save and upload to taiga PR-level matrix
 
@@ -436,6 +437,14 @@ def uploadPRMatrix(
     print("loading ", latest_fn, " from latest")
     tc = TaigaClient()
     to_subset = tc.get(name=taiga_latest, file=latest_fn)
+
+    if "EntrezGeneID" in set(to_subset.columns):
+        print("making sure Entrez column is Int64")
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].fillna(0)
+        to_subset["EntrezGeneID"] = (
+            to_subset["EntrezGeneID"].astype("Int64").astype(str)
+        )
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].replace({"0": ""})
 
     print("subsetting ", latest_fn)
     if pr_col == "index":
@@ -493,6 +502,14 @@ def uploadModelMatrix(
     print("loading ", latest_fn, " from latest")
     tc = TaigaClient()
     to_subset = tc.get(name=taiga_latest, file=latest_fn)
+
+    if "EntrezGeneID" in set(to_subset.columns):
+        print("making sure Entrez column is Int64")
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].fillna(0)
+        to_subset["EntrezGeneID"] = (
+            to_subset["EntrezGeneID"].astype("Int64").astype(str)
+        )
+        to_subset["EntrezGeneID"] = to_subset["EntrezGeneID"].replace({"0": ""})
 
     print("subsetting ", latest_fn)
     if pr_col == "index":
@@ -643,6 +660,7 @@ def makePRLvMatrices(
     files_raw=config["latest2fn_raw_pr"],
     today=None,
     sampleid=config["sample_id"],
+    exclude=config["exclude"],
 ):
     """for each portal, save and upload profile-indexed data matrices
 
@@ -657,45 +675,48 @@ def makePRLvMatrices(
         print("uploading profile-level matrices to ", portal)
         for latest_id, fn_dict in files_nummat.items():
             for latest, virtual in fn_dict.items():
-                uploadPRMatrix(
-                    prs_to_release,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "NumericMatrixCSV",
-                    pr_col="index",
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                )
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "NumericMatrixCSV",
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                    )
         for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
-                uploadPRMatrix(
-                    prs_to_release,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "TableCSV",
-                    pr_col=sampleid,
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                )
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "TableCSV",
+                        pr_col=sampleid,
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                    )
         for latest_id, fn_dict in files_raw.items():
             for latest, virtual in fn_dict.items():
-                uploadPRMatrix(
-                    prs_to_release,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "Raw",
-                    pr_col="Tumor_Sample_Barcode",
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                    save_format=".maf",
-                    save_sep="\t",
-                )
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "Raw",
+                        pr_col="Tumor_Sample_Barcode",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                        save_format=".maf",
+                        save_sep="\t",
+                    )
 
 
 def makeModelLvMatrices(
@@ -706,6 +727,7 @@ def makeModelLvMatrices(
     upload_guide_matrices=True,
     today=None,
     sampleid=config["sample_id"],
+    exclude=config["exclude"],
 ):
     """for each portal, save and upload profile-indexed data matrices
 
@@ -723,30 +745,32 @@ def makeModelLvMatrices(
         print("uploading model-level matrices to", portal)
         for latest_id, fn_dict in files_nummat.items():
             for latest, virtual in fn_dict.items():
-                uploadModelMatrix(
-                    pr2model_dict,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "NumericMatrixCSV",
-                    pr_col="index",
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                )
+                if latest not in exclude[portal]:
+                    uploadModelMatrix(
+                        pr2model_dict,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "NumericMatrixCSV",
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                    )
         for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
-                uploadModelMatrix(
-                    pr2model_dict,
-                    latest_id,
-                    virtual_ids[portal],
-                    latest,
-                    virtual,
-                    "TableCSV",
-                    pr_col=sampleid,
-                    folder=folder + "/",
-                    change_desc="adding " + virtual,
-                )
+                if latest not in exclude[portal]:
+                    uploadModelMatrix(
+                        pr2model_dict,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual,
+                        "TableCSV",
+                        pr_col=sampleid,
+                        folder=folder + "/",
+                        change_desc="adding " + virtual,
+                    )
         if upload_guide_matrices:
             uploadBinaryGuideMutationMatrixModel(
                 pr2model_dict, portal, taiga_virtual=virtual_ids[portal]
@@ -776,15 +800,18 @@ def updateEternal(
     """update taiga eternal dataset by linking to latest virtual internal dataset"""
     latest_version = findLatestVersion(virtual["internal"])
 
-    files = [
-        config["virtual_filenames_nummat_exp"].values()
-        + config["virtual_filenames_nummat_cn"].values()
-        + config["virtual_filenames_nummat_mut"].values()
-        + config["virtual_filenames_germline"].values()
-        + config["virtual_filenames_table_fusion"].values()
-        + config["virtual_filenames_table_cn"].values()
-        + config["virtual_filenames_table_mut"].values()
-    ]
+    files = (list(config["virtual_filenames_nummat_exp_model"].values())
+    + list(config["virtual_filenames_nummat_exp_pr"].values())
+    + list(config["virtual_filenames_nummat_cn_model"].values())
+    + list(config["virtual_filenames_nummat_cn_pr"].values())
+    + list(config["virtual_filenames_nummat_mut_model"].values())
+    + list(config["virtual_filenames_guidemut"].values())
+    + list(config["virtual_filenames_table_fusion_model"].values())
+    + list(config["virtual_filenames_table_fusion_pr"].values())
+    + list(config["virtual_filenames_table_cn_pr"].values())
+    + list(config["virtual_filenames_table_mut_model"].values())
+    + list(config["virtual_filenames_table_mut_pr"].values())
+    + list(config["virtual_filenames_raw_mut_pr"].values()))
 
     tc = TaigaClient()
     tc.update_dataset(

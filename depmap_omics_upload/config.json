@@ -1,12 +1,13 @@
 {
     "dryrun": false,
-    "sampleset": "22Q4",
-    "gumbo_env": "staging",
+    "sampleset": "23Q4",
+    "gumbo_env": "production",
     "gumbo_client_username": "szhang",
     "gcp_billing_proj": "broad-firecloud-ccle",
     "creds": "~/bin/.credentials.json",
     "datatypes": [
-        "wgs"
+        "wgs",
+        "rna"
     ],
     "working_dir": "output/",
     "loading_workingdir": "output/loaded_samples/",
@@ -103,6 +104,8 @@
     "sample_table_name": "sample",
     "screen_table_name": "screen",
     "screen_table_index": "ScreenID",
+    "str_table_name": "str_profile",
+    "str_table_index": "id",
     "ach_choice_table_name": "achilles_choice_table",
     "ach_choice_table_cols": [
         "ModelConditionID",
@@ -130,12 +133,12 @@
         "merged_gene_cn_profile": "OmicsCNGene",
         "merged_absolute_gene_cn_profile": "OmicsAbsoluteCNGene",
         "merged_loh_profile": "OmicsLoH",
-        "globalGenomicFeatures_profile": "OmicsSignatures"
+        "globalGenomicFeatures_profile": "OmicsSignatures",
+        "armLevelCNA_profile": "OmicsArmLevelCNA"
     },
     "virtual_filenames_nummat_mut_model": {
         "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
-        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging",
-        "somaticMutations_genotypedMatrix_driver_profile": "OmicsSomaticMutationsMatrixDriver"
+        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging"
     },
     "virtual_filenames_germline_model": {
         "binary_germline_mutation": "OmicsGuideMutationsBinaryAvana"
@@ -163,7 +166,8 @@
         "rnaseqc_count_mat_profile": "OmicsExpressionRNASeQCGeneCountProfile"
     },
     "virtual_filenames_nummat_cn_pr": {
-        "globalGenomicFeatures_profile": "OmicsSignaturesProfile"
+        "globalGenomicFeatures_profile": "OmicsSignaturesProfile",
+        "armLevelCNA_profile": "OmicsArmLevelCNAProfile"
     },
     "virtual_filenames_nummat_mut_pr": {},
     "virtual_filenames_germline_pr": {},
@@ -185,6 +189,13 @@
         "internal": "",
         "dmc": "",
         "public": ""
+    },
+    "exclude": {
+        "internal": [],
+        "dmc": [],
+        "public": [
+            "structuralVariants_profile"
+        ]
     },
     "taiga_expression": "expression-d035",
     "taiga_cn": "cn-latest-d8d4",
@@ -209,6 +220,11 @@
         [
             "DEPMAP",
             "terra-broad-cancer-prod/CCLE_DepMap_RNAseq",
+            "bam"
+        ],
+        [
+            "IBM",
+            "terra-broad-cancer-prod/Getz_IBM_CellLines_RNASeqData",
             "bam"
         ]
     ]
