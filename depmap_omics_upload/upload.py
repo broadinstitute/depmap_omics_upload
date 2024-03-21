@@ -373,12 +373,14 @@ def makeProfileTable(prs, columns=config["profile_table_cols"]):
     """
     mytracker = track.SampleTracker()
     pr_table = mytracker.add_model_cols_to_prtable(["ModelID"])
+    seq_table = mytracker.read_seq_table()
     pr_table = pr_table.loc[prs, columns].rename(columns={"Baits": "WESKit"})
     pr_table = pr_table[pr_table["Datatype"].isin(["rna", "wgs", "wes", "SNParray"])]
     pr_table.loc[
         pr_table[pr_table["Datatype"].isin(["rna", "wgs", "SNParray"])].index.tolist(),
         "WESKit",
     ] = ""
+    pr_table["Stranded"] = pr_table["MainSequencingID"].map(dict(zip(seq_table.index, seq_table.stranded)))
 
     mytracker.close_gumbo_client()
     return pr_table
