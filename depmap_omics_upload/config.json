@@ -124,7 +124,9 @@
         "ModelID",
         "Datatype",
         "Baits",
-        "actual_seq_technology"
+        "actual_seq_technology",
+        "Stranded",
+        "Source"
     ],
     "virtual_filenames_nummat_exp_model": {
         "proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1",
