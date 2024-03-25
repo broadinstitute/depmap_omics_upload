@@ -197,7 +197,8 @@
         "internal": [],
         "dmc": [],
         "public": [
-            "structuralVariants_profile"
+            "structuralVariants_profile",
+            "armLevelCNA_profile"
         ]
     },
     "taiga_expression": "expression-d035",
