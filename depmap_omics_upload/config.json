@@ -130,7 +130,8 @@
     ],
     "virtual_filenames_nummat_exp_model": {
         "proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1",
-        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichment"
+        "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichment",
+        "stranded_proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1Stranded"
     },
     "virtual_filenames_nummat_cn_model": {
         "merged_gene_cn_profile": "OmicsCNGene",
@@ -166,7 +167,8 @@
         "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichmentProfile",
         "genes_tpm_logp1_profile": "OmicsExpressionAllGenesTPMLogp1Profile",
         "genes_effectiveLength_profile": "OmicsExpressionAllGenesEffectiveLengthProfile",
-        "rnaseqc_count_mat_profile": "OmicsExpressionRNASeQCGeneCountProfile"
+        "rnaseqc_count_mat_profile": "OmicsExpressionRNASeQCGeneCountProfile",
+        "stranded_rnaseqc_count_mat_profile": "OmicsExpressionRNASeQCGeneCountStrandedProfile"
     },
     "virtual_filenames_nummat_cn_pr": {
         "globalGenomicFeatures_profile": "OmicsSignaturesProfile",
