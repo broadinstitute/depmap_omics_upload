@@ -1,8 +1,8 @@
 {
     "dryrun": false,
-    "sampleset": "23Q4",
+    "sampleset": "24Q2",
     "gumbo_env": "production",
-    "gumbo_client_username": "szhang",
+    "gumbo_client_username": "gulatide",
     "gcp_billing_proj": "broad-firecloud-ccle",
     "creds": "~/bin/.credentials.json",
     "datatypes": [
