@@ -222,11 +222,14 @@ class SampleTracker:
         },
         priority=None,
         dryrun=False,
+        processed_seqids=[],
     ):
         seq_table = self.read_seq_table()
         seq_table = seq_table[
             (seq_table.blacklist != True) & (seq_table.expected_type.isin(datatype))
         ]
+        if len(processed_seqids) > 0:
+            seq_table = seq_table[seq_table.index.isin(processed_seqids)]
         pr_table = self.read_pr_table()
         prs_in_seq_table = seq_table.ProfileID.unique()
 
