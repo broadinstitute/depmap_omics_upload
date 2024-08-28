@@ -375,9 +375,15 @@ def makeProfileTable(prs, columns=config["profile_table_cols"]):
     pr_table = mytracker.add_model_cols_to_prtable(["ModelID"])
     seq_table = mytracker.read_seq_table()
     mc_table = mytracker.read_mc_table()
-    pr_table["Stranded"] = pr_table["MainSequencingID"].map(dict(zip(seq_table.index, seq_table.stranded)))
-    pr_table["Source"] = pr_table["ModelCondition"].map(dict(zip(mc_table.index, mc_table.Source)))
-    pr_table = pr_table.loc[prs, columns].rename(columns={"Baits": "WESKit", "actual_seq_technology": "Product"})
+    pr_table["Stranded"] = pr_table["MainSequencingID"].map(
+        dict(zip(seq_table.index, seq_table.stranded))
+    )
+    pr_table["Source"] = pr_table["ModelCondition"].map(
+        dict(zip(mc_table.index, mc_table.Source))
+    )
+    pr_table = pr_table.loc[prs, columns].rename(
+        columns={"Baits": "WESKit", "actual_seq_technology": "Product"}
+    )
     pr_table = pr_table[pr_table["Datatype"].isin(["rna", "wgs", "wes", "SNParray"])]
     pr_table.loc[
         pr_table[pr_table["Datatype"].isin(["rna", "wgs", "SNParray"])].index.tolist(),
@@ -597,6 +603,55 @@ def uploadBinaryGuideMutationMatrixModel(
         )
 
 
+def uploadMSRepeatProfile(
+    prs,
+    taiga_virtual,
+    taiga_latest=config["taiga_cn"],
+    fn_mapping=config["virtual_filenames_ms_repeat_pr"],
+    folder=config["working_dir"],
+    save_format=".csv",
+    save_sep=",",
+    num_static_cols=5,
+):
+    """subset, save and upload to taiga PR-level microsatellite repeat matrix
+
+    Args:
+        prs (list): list of PR-ids to release
+        taiga_latest (str): which dataset the matrices to be subsetted are being read from
+        taiga_virtual (str): which dataset the matrices are being uploaded to
+        latest_fn (str): file name on taiga latest
+        virtual_fn (str): file name on taiga virtual
+        folder (str): where the file should be stores before uploading to virtual
+        change_desc (str): change description on taiga virtual
+        num_static_cols (int): number of columns in the df that are static/not profiles
+    """
+    for latest_fn, virtual_fn in fn_mapping.items():
+        print("loading ", latest_fn, " from latest")
+        tc = TaigaClient()
+        to_subset = tc.get(name=taiga_latest, file=latest_fn)
+
+        print("subsetting ", latest_fn)
+        subset_mat = to_subset.iloc[:, :num_static_cols].join(
+            subset_mat.loc[:, num_static_cols:][set(subset_mat.columns) & set(prs)]
+        )
+        subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
+
+        print("uploading ", virtual_fn, " to virtual")
+        tc.update_dataset(
+            dataset_id=taiga_virtual,
+            changes_description="adding " + virtual_fn,
+            upload_files=[
+                {
+                    "path": folder + virtual_fn + save_format,
+                    "name": virtual_fn,
+                    "format": "TableCSV",
+                    "encoding": "utf-8",
+                },
+            ],
+            add_all_existing_files=True,
+        )
+
+
 def uploadAuxTables(
     taiga_ids,
     ach_table_name=config["ach_choice_table_name"],
@@ -721,6 +776,7 @@ def makePRLvMatrices(
                         save_format=".maf",
                         save_sep="\t",
                     )
+        uploadMSRepeatProfile(prs_to_release, virtual_ids[portal], folder=folder + "/")
 
 
 def makeModelLvMatrices(
@@ -804,18 +860,20 @@ def updateEternal(
     """update taiga eternal dataset by linking to latest virtual internal dataset"""
     latest_version = findLatestVersion(virtual["internal"])
 
-    files = (list(config["virtual_filenames_nummat_exp_model"].values())
-    + list(config["virtual_filenames_nummat_exp_pr"].values())
-    + list(config["virtual_filenames_nummat_cn_model"].values())
-    + list(config["virtual_filenames_nummat_cn_pr"].values())
-    + list(config["virtual_filenames_nummat_mut_model"].values())
-    + list(config["virtual_filenames_guidemut"].values())
-    + list(config["virtual_filenames_table_fusion_model"].values())
-    + list(config["virtual_filenames_table_fusion_pr"].values())
-    + list(config["virtual_filenames_table_cn_pr"].values())
-    + list(config["virtual_filenames_table_mut_model"].values())
-    + list(config["virtual_filenames_table_mut_pr"].values())
-    + list(config["virtual_filenames_raw_mut_pr"].values()))
+    files = (
+        list(config["virtual_filenames_nummat_exp_model"].values())
+        + list(config["virtual_filenames_nummat_exp_pr"].values())
+        + list(config["virtual_filenames_nummat_cn_model"].values())
+        + list(config["virtual_filenames_nummat_cn_pr"].values())
+        + list(config["virtual_filenames_nummat_mut_model"].values())
+        + list(config["virtual_filenames_guidemut"].values())
+        + list(config["virtual_filenames_table_fusion_model"].values())
+        + list(config["virtual_filenames_table_fusion_pr"].values())
+        + list(config["virtual_filenames_table_cn_pr"].values())
+        + list(config["virtual_filenames_table_mut_model"].values())
+        + list(config["virtual_filenames_table_mut_pr"].values())
+        + list(config["virtual_filenames_raw_mut_pr"].values())
+    )
 
     tc = TaigaClient()
     tc.update_dataset(
