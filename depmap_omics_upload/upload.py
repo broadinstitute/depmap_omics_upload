@@ -632,7 +632,7 @@ def uploadMSRepeatProfile(
 
         print("subsetting ", latest_fn)
         subset_mat = to_subset.iloc[:, :num_static_cols].join(
-            subset_mat.loc[:, num_static_cols:][set(subset_mat.columns) & set(prs)]
+            to_subset.iloc[:, num_static_cols:][list(set(to_subset.columns) & set(prs))]
         )
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
 
