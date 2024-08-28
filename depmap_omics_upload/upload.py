@@ -619,10 +619,8 @@ def uploadMSRepeatProfile(
         prs (list): list of PR-ids to release
         taiga_latest (str): which dataset the matrices to be subsetted are being read from
         taiga_virtual (str): which dataset the matrices are being uploaded to
-        latest_fn (str): file name on taiga latest
-        virtual_fn (str): file name on taiga virtual
+        fn_mapping (dict): dictionary where key = filename in latest and value = filename in virtual
         folder (str): where the file should be stores before uploading to virtual
-        change_desc (str): change description on taiga virtual
         num_static_cols (int): number of columns in the df that are static/not profiles
     """
     for latest_fn, virtual_fn in fn_mapping.items():
