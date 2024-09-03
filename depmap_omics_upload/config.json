@@ -190,6 +190,9 @@
     "virtual_filenames_raw_mut_pr": {
         "somaticMutations_profile_maf": "OmicsSomaticMutationsMAFProfile.maf"
     },
+    "virtual_filenames_ms_repeat_pr": {
+        "ms_repeat_profile": "OmicsMicrosatelliteRepeatsProfile"
+    },
     "virtual": {
         "internal": "",
         "dmc": "",
