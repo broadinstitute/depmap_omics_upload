@@ -15,7 +15,7 @@ import pkgutil
 
 # loading config
 configdata = pkgutil.get_data(__name__, "config.json")
-config = json.loads(configdata) # type: ignore
+config = json.loads(configdata)  # type: ignore
 
 
 # condense all interactions with tracker (for emeril integration)
@@ -83,7 +83,7 @@ class SampleTracker:
         )
         seq_table_camel = seq_table_camel.set_index(self.seq_table_index)
         return seq_table_camel
-    
+
     def read_screen_table(self):
         screen_table = self.client.get(self.screen_table_name)
         screen_table_camel = self.mapping_utils.rename_columns(
@@ -91,7 +91,7 @@ class SampleTracker:
         )
         screen_table_camel = screen_table_camel.set_index(self.screen_table_index)
         return screen_table_camel
-    
+
     def read_str_table(self):
         str_table = self.client.get(self.str_table_name)
         str_table = str_table.set_index(self.str_table_index)
@@ -139,7 +139,7 @@ class SampleTracker:
         )
         self.client.insert_only(self.seq_table_name, df)
         self.client.commit()
-    
+
     def insert_to_str_table(self, df):
         df.index.name = self.str_table_index
         df = df.reset_index(level=0)
@@ -222,14 +222,13 @@ class SampleTracker:
         },
         priority=None,
         dryrun=False,
-        processed_seqids=[],
     ):
         seq_table = self.read_seq_table()
         seq_table = seq_table[
-            (seq_table.blacklist != True) & (seq_table.expected_type.isin(datatype))
+            (seq_table.blacklist != True)
+            & (seq_table.expected_type.isin(datatype))
+            & (seq_table.processed_sequence == True)
         ]
-        if len(processed_seqids) > 0:
-            seq_table = seq_table[seq_table.index.isin(processed_seqids)]
         pr_table = self.read_pr_table()
         prs_in_seq_table = seq_table.ProfileID.unique()
 
@@ -849,9 +848,9 @@ def update(
             onlysamples=samplesinset,
             workspaceto=refworkspace,
         )
-        table.loc[res.index.tolist()][
-            ["legacy_size", "legacy_crc32c_hash"]
-        ] = table.loc[res.index.tolist()][["size", "crc32c_hash"]].values
+        table.loc[res.index.tolist()][["legacy_size", "legacy_crc32c_hash"]] = (
+            table.loc[res.index.tolist()][["size", "crc32c_hash"]].values
+        )
         table.loc[res.index.tolist(), ["bam_filepath", "bai_filepath"]] = res[
             bamfilepaths[:2]
         ].values
