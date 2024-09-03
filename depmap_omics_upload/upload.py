@@ -54,7 +54,7 @@ def getPRToRelease(
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
     mytracker.close_gumbo_client()
-    pr_table = pr_table[pr_table.BlacklistOmics != True]
+    pr_table = pr_table[(pr_table.BlacklistOmics != True) & (pr_table.Datatype.isin(["rna", "wgs", "wes"]))]
     prs = dict()
     for k, v in date_col_dict.items():
         prs_with_date = pr_table[~(pr_table[v].isnull())]
