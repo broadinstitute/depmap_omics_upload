@@ -880,6 +880,7 @@ def update(
         ]
 
     table.loc[samplesinset, ["low_quality", "blacklist", "prioritized"]] = False
+    table.loc[samplesinset, "processed_sequence"] = True
     table.loc[lowqual, "low_quality"] = True
     failed_not_dropped = list(set(failed) - set(todrop))
     table.loc[failed_not_dropped, "blacklist"] = True
