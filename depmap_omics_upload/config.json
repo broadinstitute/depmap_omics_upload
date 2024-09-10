@@ -74,7 +74,6 @@
     },
     "datasets": [
         "internal",
-        "dmc",
         "public"
     ],
     "sample_id": "DepMap_ID",
