@@ -133,3 +133,6 @@ dmypy.json
 
 depmap_omics_upload/loaded_samples/*
 depmap_omics_upload/output/loaded_samples/*
+
+output/
+.idea/

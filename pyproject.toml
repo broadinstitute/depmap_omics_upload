@@ -7,8 +7,16 @@ readme = "README.md"
 packages = [{include = "depmap_omics_upload"}]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
+pandas = "1.5.3"
+biomart = "^0.9.2"
+firecloud-dalmatian = "^0.0.18"
+gumbo-rest-client = {version = "^2.0.4", source = "public-python"}
 
+[[tool.poetry.source]]
+name = "public-python"
+url = "https://us-central1-python.pkg.dev/cds-artifacts/public-python/simple/"
+priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]
