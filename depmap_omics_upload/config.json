@@ -142,7 +142,8 @@
     },
     "virtual_filenames_nummat_mut_model": {
         "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
-        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging"
+        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging",
+        "sv_mat_with_entrez_profile": "OmicsStructuralVariantsMatrix"
     },
     "virtual_filenames_germline_model": {
         "binary_germline_mutation": "OmicsGuideMutationsBinaryAvana"
@@ -168,7 +169,11 @@
         "genes_tpm_logp1_profile": "OmicsExpressionAllGenesTPMLogp1Profile",
         "genes_effectiveLength_profile": "OmicsExpressionAllGenesEffectiveLengthProfile",
         "rnaseqc_count_mat_profile": "OmicsExpressionRNASeQCGeneCountProfile",
-        "stranded_rnaseqc_count_mat_profile": "OmicsExpressionRNASeQCGeneCountStrandedProfile"
+        "stranded_rnaseqc_count_mat_profile": "OmicsExpressionRNASeQCGeneCountStrandedProfile",
+        "stranded_genes_tpm_logp1_profile": "OmicsExpressionAllGenesTPMLogp1StrandedProfile",
+        "stranded_transcripts_tpm_logp1_profile": "OmicsExpressionTranscriptsTPMLogp1StrandedProfile",
+        "stranded_genes_expected_count_profile": "OmicsExpressionGenesExpectedCountStrandedProfile",
+        "stranded_transcripts_expected_count_profile": "OmicsExpressionTranscriptsExpectedCountStrandedProfile"
     },
     "virtual_filenames_nummat_cn_pr": {
         "globalGenomicFeatures_profile": "OmicsSignaturesProfile",
