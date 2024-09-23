@@ -208,6 +208,7 @@
         "dmc": [],
         "public": [
             "structuralVariants_profile",
+            "sv_mat_with_entrez_profile",
             "armLevelCNA_profile"
         ]
     },
