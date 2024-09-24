@@ -848,13 +848,10 @@ def update(
             onlysamples=samplesinset,
             workspaceto=refworkspace,
         )
-        table.loc[res.index.tolist()][["legacy_size", "legacy_crc32c_hash"]] = (
-            table.loc[res.index.tolist()][["size", "crc32c_hash"]].values
-        )
         table.loc[res.index.tolist(), ["bam_filepath", "bai_filepath"]] = res[
             bamfilepaths[:2]
         ].values
-        table.loc[res.index.tolist(), "size"] = [
+        table.loc[res.index.tolist(), "bam_size"] = [
             gcp.extractSize(i)[1]
             for i in gcp.lsFiles(
                 res[bamfilepaths[0]].tolist(),
@@ -862,16 +859,8 @@ def update(
                 billing_proj=billing_proj,
             )
         ]
-        table.loc[res.index.tolist(), "crc32c_hash"] = [
+        table.loc[res.index.tolist(), "bam_crc32c_hash"] = [
             gcp.extractHash(i)
-            for i in gcp.lsFiles(
-                res[bamfilepaths[0]].tolist(),
-                "-L",
-                billing_proj=billing_proj,
-            )
-        ]
-        table.loc[res.index.tolist(), "md5_hash"] = [
-            gcp.extractHash(i, typ="md5")
             for i in gcp.lsFiles(
                 res[bamfilepaths[0]].tolist(),
                 "-L",
