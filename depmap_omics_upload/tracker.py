@@ -7,8 +7,8 @@ from depmap_omics_upload.mgenepy import terra
 from depmap_omics_upload.mgenepy.google import gcp
 import dalmatian as dm
 import signal
-import gumbo_client
-import gumbo_client.utils as gumbo_utils
+import gumbo_rest_client
+import gumbo_rest_client.utils as gumbo_utils
 from datetime import date
 import json
 import pkgutil
@@ -40,21 +40,16 @@ class SampleTracker:
         self.screen_table_index = config["screen_table_index"]
         self.str_table_name = config["str_table_name"]
         self.str_table_index = config["str_table_index"]
-        # prod env for gumbo
-        self.client = gumbo_client.Client(username=config["gumbo_client_username"])
-        if gumbo_env == "staging":
-            # hard-coded for now, waiting for independent staging envs to be enabled
-            self.client = gumbo_client.Client(
-                config_dir="~/.config/gumbo-staging",
-                username=config["gumbo_client_username"],
-            )
+        self.client = gumbo_rest_client.Client(
+            authed_session=gumbo_rest_client.create_authorized_session(
+                use_default_service_account=True
+            ),
+            username="snp_str_qc",
+            base_url=gumbo_rest_client.const.prod_url
+            if gumbo_env == "production"
+            else gumbo_rest_client.const.staging_url,
+        )
         self.mapping_utils = gumbo_utils.NameMappingUtils()
-
-    def commit_gumbo(self):
-        self.client.commit()
-
-    def close_gumbo_client(self):
-        self.client.close()
 
     def read_model_table(self):
         model_table = self.client.get(self.model_table_name)
@@ -103,8 +98,7 @@ class SampleTracker:
         self.mapping_utils.rename_columns(
             self.mc_table_name, df, convert_to_custom_names=False, inplace=True
         )
-        self.client.update(self.mc_table_name, df)
-        self.client.commit()
+        self.client.update_only(self.mc_table_name, df)
 
     def write_pr_table(self, df):
         # assumes df's columns are camelCase, and converts it back to snake_case
@@ -112,8 +106,7 @@ class SampleTracker:
         self.mapping_utils.rename_columns(
             self.pr_table_name, df, convert_to_custom_names=False, inplace=True
         )
-        self.client.update(self.pr_table_name, df)
-        self.client.commit()
+        self.client.update_only(self.pr_table_name, df)
 
     def write_seq_table(self, df):
         # assumes df's columns are camelCase, and converts it back to snake_case
@@ -122,14 +115,12 @@ class SampleTracker:
         self.mapping_utils.rename_columns(
             self.seq_table_name, df, convert_to_custom_names=False, inplace=True
         )
-        self.client.update(self.seq_table_name, df)
-        self.client.commit()
+        self.client.update_only(self.seq_table_name, df)
 
     def write_str_table(self, df):
         df.index.name = self.str_table_index
         df = df.reset_index(level=0)
-        self.client.update(self.str_table_name, df)
-        self.client.commit()
+        self.client.update_only(self.str_table_name, df)
 
     def insert_to_seq_table(self, df):
         df.index.name = self.seq_table_index
@@ -138,13 +129,11 @@ class SampleTracker:
             self.seq_table_name, df, convert_to_custom_names=False, inplace=True
         )
         self.client.insert_only(self.seq_table_name, df)
-        self.client.commit()
 
     def insert_to_str_table(self, df):
         df.index.name = self.str_table_index
         df = df.reset_index(level=0)
         self.client.insert_only(self.str_table_name, df)
-        self.client.commit()
 
     def get_participant_id(self, seqid, seq_table, pr_table, mc_table, model_table):
         # assumes all tables are camelCase
