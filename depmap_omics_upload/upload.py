@@ -284,7 +284,7 @@ def makeDefaultModelTable(
     subset_pr_table = pr_table.loc[prs]
     subset_pr_table = subset_pr_table[subset_pr_table.BlacklistOmics != 1]
     mcs = set(subset_pr_table["ModelCondition"])
-    # MCs treated with a Drug that's not DMSO can never be considered default
+    # MCs treated with a Drug that's not DMSO can never be considered default basel omics
     # If there's no non-drug treated MC for a model, the model should not have any default profiles
     nondrugged_mc_table = mc_table[
         (mc_table.index.isin(mcs))
@@ -313,7 +313,7 @@ def makeDefaultModelTable(
             ].MainSequencingID.tolist()
             subset_seq_table = seq_table[seq_table.index.isin(cds_ids)].copy()
             subset_seq_table["source"] = subset_seq_table["source"].map(source_priority)
-            # if Drug == DMSO, it should be ranked lower than Drug == NaN
+            # None > DMSO > drug. If Drug == DMSO, it should be ranked lower than Drug == NaN
             # for example, a Sanger no-drug should have higher priority than Broad DMSO
             # add 100 to make sure it overrides source priority
             subset_seq_table.loc[subset_seq_table.Drug == "DMSO", "source"] += 100
