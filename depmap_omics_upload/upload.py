@@ -54,7 +54,10 @@ def getPRToRelease(
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
     mytracker.close_gumbo_client()
-    pr_table = pr_table[(pr_table.BlacklistOmics != True) & (pr_table.Datatype.isin(["rna", "wgs", "wes"]))]
+    pr_table = pr_table[
+        (pr_table.BlacklistOmics != True)
+        & (pr_table.Datatype.isin(["rna", "wgs", "wes"]))
+    ]
     prs = dict()
     for k, v in date_col_dict.items():
         prs_with_date = pr_table[~(pr_table[v].isnull())]
@@ -392,7 +395,11 @@ def makeProfileTable(prs, columns=config["profile_table_cols"]):
         dict(zip(mc_table.index, mc_table.Source))
     )
     pr_table = pr_table.loc[prs, columns].rename(
-        columns={"Baits": "WESKit", "actual_seq_technology": "Product"}
+        columns={
+            "Baits": "WESKit",
+            "actual_seq_technology": "Product",
+            "shared_to_dbgap": "SharedToDbgap",
+        }
     )
     pr_table = pr_table[pr_table["Datatype"].isin(["rna", "wgs", "wes", "SNParray"])]
     pr_table.loc[
