@@ -145,9 +145,6 @@
         "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging",
         "sv_mat_with_entrez_profile": "OmicsStructuralVariantsMatrix"
     },
-    "virtual_filenames_germline_model": {
-        "binary_germline_mutation": "OmicsGuideMutationsBinaryAvana"
-    },
     "virtual_filenames_table_fusion_model": {
         "fusions_filtered_profile": "OmicsFusionFiltered"
     },
@@ -159,7 +156,9 @@
     "virtual_filenames_guidemut": {
         "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
         "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
-        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne"
+        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne",
+        "binary_mutation_brunello": "OmicsGuideMutationsBinaryBrunello",
+        "binary_mutation_tkov3": "OmicsGuideMutationsBinaryTKOv3"
     },
     "virtual_filenames_nummat_exp_pr": {
         "genes_expectedCount_profile": "OmicsExpressionGenesExpectedCountProfile",
