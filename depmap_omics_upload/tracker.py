@@ -44,7 +44,7 @@ class SampleTracker:
             authed_session=gumbo_rest_client.create_authorized_session(
                 use_default_service_account=True
             ),
-            username="snp_str_qc",
+            username="depmap_omics_upload",
             base_url=gumbo_rest_client.const.prod_url
             if gumbo_env == "production"
             else gumbo_rest_client.const.staging_url,

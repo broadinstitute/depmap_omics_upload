@@ -136,3 +136,5 @@ depmap_omics_upload/output/loaded_samples/*
 
 output/
 .idea/
+
+.vscode/
