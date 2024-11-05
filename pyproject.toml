@@ -8,7 +8,8 @@ packages = [{include = "depmap_omics_upload"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pandas = "1.5.3"
+pandas = "^1.5.3"
+numpy = "^1.26.4"
 biomart = "^0.9.2"
 firecloud-dalmatian = "^0.0.18"
 gumbo-rest-client = {version = "^2.0.4", source = "public-python"}

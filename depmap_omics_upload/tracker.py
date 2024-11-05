@@ -42,7 +42,7 @@ class SampleTracker:
         self.str_table_index = config["str_table_index"]
         self.client = gumbo_rest_client.Client(
             authed_session=gumbo_rest_client.create_authorized_session(
-                use_default_service_account=True
+                use_default_service_account=False
             ),
             username="depmap_omics_upload",
             base_url=gumbo_rest_client.const.prod_url
