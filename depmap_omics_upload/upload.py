@@ -54,7 +54,10 @@ def getPRToRelease(
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
     mytracker.close_gumbo_client()
-    pr_table = pr_table[(pr_table.BlacklistOmics != True) & (pr_table.Datatype.isin(["rna", "wgs", "wes"]))]
+    pr_table = pr_table[
+        (pr_table.BlacklistOmics != True)
+        & (pr_table.Datatype.isin(["rna", "wgs", "wes"]))
+    ]
     prs = dict()
     for k, v in date_col_dict.items():
         prs_with_date = pr_table[~(pr_table[v].isnull())]
@@ -258,7 +261,7 @@ def makeDefaultModelTable(
     source_priority=config["source_priority"],
     colnames=config["default_table_cols"],
 ):
-    """generate a table that indicates which profiles are released corresponding to which modelID
+    """generate a table that indicates which profiles are selected to represent each Model
 
     Args:
         prs (list): list of profile IDs to be released
@@ -272,16 +275,29 @@ def makeDefaultModelTable(
     pr_table = pr_table[pr_table.BlacklistOmics != True]
     mc_table = mytracker.read_mc_table()
     seq_table = mytracker.read_seq_table()
+    # add drug column from MC table to seq table
+    seq_table["ModelCondition"] = seq_table["ProfileID"].map(
+        dict(zip(pr_table.index, pr_table.ModelCondition))
+    )
+    seq_table["Drug"] = seq_table["ModelCondition"].map(
+        dict(zip(mc_table.index, mc_table.Drug))
+    )
     source_priority = {source_priority[i]: i for i in range(len(source_priority))}
     rows = []
     subset_pr_table = pr_table.loc[prs]
     subset_pr_table = subset_pr_table[subset_pr_table.BlacklistOmics != 1]
     mcs = set(subset_pr_table["ModelCondition"])
-    models = set(mc_table.loc[mcs].ModelID)
+    # MCs treated with a Drug that's not DMSO can never be considered default basel omics
+    # If there's no non-drug treated MC for a model, the model should not have any default profiles
+    nondrugged_mc_table = mc_table[
+        (mc_table.index.isin(mcs))
+        & ((mc_table.Drug.isna()) | (mc_table.Drug == "DMSO"))
+    ]
+    models = set(mc_table.loc[list(mcs), "ModelID"])
     mytracker.close_gumbo_client()
     # we're only picking one PR per datatype (rna/dna) for each Model
     for m in models:
-        subset_mc_table = mc_table[mc_table.ModelID == m]
+        subset_mc_table = nondrugged_mc_table[nondrugged_mc_table.ModelID == m]
         mcs_in_model = subset_mc_table.index.tolist()
         prs_in_model = subset_pr_table[
             (subset_pr_table.ModelCondition.isin(mcs_in_model))
@@ -298,8 +314,12 @@ def makeDefaultModelTable(
             cds_ids = prs_in_model[
                 prs_in_model.Datatype == "rna"
             ].MainSequencingID.tolist()
-            subset_seq_table = seq_table[seq_table.index.isin(cds_ids)]
-            subset_seq_table.source = subset_seq_table.source.replace(source_priority)
+            subset_seq_table = seq_table[seq_table.index.isin(cds_ids)].copy()
+            subset_seq_table["source"] = subset_seq_table["source"].map(source_priority)
+            # None > DMSO > drug. If Drug == DMSO, it should be ranked lower than Drug == NaN
+            # for example, a Sanger no-drug should have higher priority than Broad DMSO
+            # add 100 to make sure it overrides source priority
+            subset_seq_table.loc[subset_seq_table.Drug == "DMSO", "source"] += 100
             latest_cds_id = subset_seq_table.loc[cds_ids, "source"].idxmin()
             pr = subset_pr_table[
                 subset_pr_table.MainSequencingID == latest_cds_id
@@ -328,34 +348,27 @@ def makeDefaultModelTable(
             )
             > 1
         ):
-            cds_ids_wgs = prs_in_model[
-                prs_in_model.Datatype == "wgs"
-            ].MainSequencingID.tolist()
-            cds_ids_wes = prs_in_model[
-                (prs_in_model.Datatype == "wes") & (prs_in_model.MainSequencingID != "")
+            cds_ids_dna = prs_in_model[
+                (prs_in_model.Datatype == "wgs")
+                | (
+                    (prs_in_model.Datatype == "wes")
+                    & (prs_in_model.MainSequencingID != "")
+                )
             ].MainSequencingID.tolist()  # MainSequencingID is '' when the profile is in legacy
             pr = ""
-            # if no wgs, look at MC table and select the most prioritized source
-            # according to the ranking in source_priority
-            if len(cds_ids_wgs) == 0:
-                subset_seq_table = seq_table[seq_table.index.isin(cds_ids_wes)]
-                subset_seq_table.source = subset_seq_table.source.replace(
-                    source_priority
-                )
-                latest_cds_id_wes = subset_seq_table.loc[cds_ids_wes, "source"].idxmin()
-                pr = subset_pr_table[
-                    subset_pr_table.MainSequencingID == latest_cds_id_wes
-                ].index[0]
-            # if there is wgs, always select wgs
-            else:
-                subset_seq_table = seq_table[seq_table.index.isin(cds_ids_wgs)]
-                subset_seq_table.source = subset_seq_table.source.replace(
-                    source_priority
-                )
-                latest_cds_id_wgs = subset_seq_table.loc[cds_ids_wgs, "source"].idxmin()
-                pr = subset_pr_table[
-                    subset_pr_table.MainSequencingID == latest_cds_id_wgs
-                ].index[0]
+            # 3 things to look at to assign priority, ranked from most important to least important
+            # DMSO vs. Drug == NaN, wes vs. wgs, and source
+            # for example, a sanger drug==NaN WES gets picked over broad DMSO WGS
+            subset_seq_table = seq_table[seq_table.index.isin(cds_ids_dna)].copy()
+            subset_seq_table["source"] = subset_seq_table["source"].map(source_priority)
+            subset_seq_table.loc[subset_seq_table.Drug == "DMSO", "source"] += 100
+            subset_seq_table.loc[
+                subset_seq_table.expected_type == "wes", "source"
+            ] += 50
+            latest_cds_id_dna = subset_seq_table.loc[cds_ids_dna, "source"].idxmin()
+            pr = subset_pr_table[
+                subset_pr_table.MainSequencingID == latest_cds_id_dna
+            ].index[0]
             rows.append((m, pr, "dna"))
     default_table = pd.DataFrame(rows, columns=colnames)
     return default_table
@@ -382,7 +395,11 @@ def makeProfileTable(prs, columns=config["profile_table_cols"]):
         dict(zip(mc_table.index, mc_table.Source))
     )
     pr_table = pr_table.loc[prs, columns].rename(
-        columns={"Baits": "WESKit", "actual_seq_technology": "Product"}
+        columns={
+            "Baits": "WESKit",
+            "actual_seq_technology": "Product",
+            "shared_to_dbgap": "SharedToDbgap",
+        }
     )
     pr_table = pr_table[pr_table["Datatype"].isin(["rna", "wgs", "wes", "SNParray"])]
     pr_table.loc[
