@@ -1,6 +1,6 @@
 {
     "dryrun": false,
-    "sampleset": "24Q2",
+    "sampleset": "24Q4",
     "gumbo_env": "production",
     "gumbo_client_username": "gulatide",
     "gcp_billing_proj": "broad-firecloud-ccle",
@@ -142,8 +142,7 @@
     },
     "virtual_filenames_nummat_mut_model": {
         "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
-        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging",
-        "sv_mat_with_entrez_profile": "OmicsStructuralVariantsMatrix"
+        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging"
     },
     "virtual_filenames_table_fusion_model": {
         "fusions_filtered_profile": "OmicsFusionFiltered"
@@ -151,14 +150,13 @@
     "virtual_filenames_table_cn_model": {},
     "virtual_filenames_table_mut_model": {
         "somaticMutations_profile": "OmicsSomaticMutations",
-        "structuralVariants_profile": "OmicsStructuralVariants"
+        "structuralVariants_profile": "OmicsStructuralVariants",
+        "structuralVariants_geneLevelMatrix_profile": "OmicsStructuralVariantsMatrix"
     },
     "virtual_filenames_guidemut": {
         "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
         "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
-        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne",
-        "binary_mutation_brunello": "OmicsGuideMutationsBinaryBrunello",
-        "binary_mutation_tkov3": "OmicsGuideMutationsBinaryTKOv3"
+        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne"
     },
     "virtual_filenames_nummat_exp_pr": {
         "genes_expectedCount_profile": "OmicsExpressionGenesExpectedCountProfile",
@@ -203,13 +201,14 @@
         "public": ""
     },
     "exclude": {
-        "internal": [],
+        "internal": [
+	],
         "dmc": [],
         "public": [
             "structuralVariants_profile",
             "sv_mat_with_entrez_profile",
             "armLevelCNA_profile"
-        ]
+	]
     },
     "taiga_expression": "expression-d035",
     "taiga_cn": "cn-latest-d8d4",

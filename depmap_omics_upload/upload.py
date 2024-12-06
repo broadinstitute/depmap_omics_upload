@@ -888,6 +888,7 @@ def updateEternal(
         + list(config["virtual_filenames_table_mut_model"].values())
         + list(config["virtual_filenames_table_mut_pr"].values())
         + list(config["virtual_filenames_raw_mut_pr"].values())
+        + list(config["virtual_filenames_ms_repeat_pr"].values())
     )
 
     tc = TaigaClient()
