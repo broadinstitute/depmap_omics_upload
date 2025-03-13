@@ -795,7 +795,6 @@ def update(
     table,
     samplesetname,
     failed,
-    lowqual,
     newgs="",
     refworkspace=None,
     bamfilepaths=["internal_bam_filepath", "internal_bai_filepath"],
@@ -857,9 +856,8 @@ def update(
             )
         ]
 
-    table.loc[samplesinset, ["low_quality", "blacklist", "prioritized"]] = False
+    table.loc[samplesinset, ["blacklist", "prioritized"]] = False
     table.loc[samplesinset, "processed_sequence"] = True
-    table.loc[lowqual, "low_quality"] = True
     failed_not_dropped = list(set(failed) - set(todrop))
     table.loc[failed_not_dropped, "blacklist"] = True
     if dry_run:
@@ -910,7 +908,6 @@ def getQC(workspace, only=[], qcname=[], match=""):
 
 def updateTrackerRNA(
     failed,
-    lowqual,
     tracker,
     samplesetname,
     refworkspace=config["rnaworkspace"],
@@ -964,7 +961,6 @@ def updateTrackerRNA(
         tracker,
         samplesetname,
         failed,
-        lowqual,
         newgs=newgs,
         refworkspace=refworkspace,
         bamfilepaths=bamfilepaths,
@@ -1042,7 +1038,6 @@ def updateTrackerWGS(
     return update(
         tracker,
         samplesetname,
-        lowqual,
         lowqual,
         newgs=newgs,
         refworkspace=refworkspace,
