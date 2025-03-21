@@ -53,7 +53,6 @@ def getPRToRelease(
         today = date.today()
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
-    mytracker.close_gumbo_client()
     pr_table = pr_table[
         (pr_table.BlacklistOmics != True)
         & (pr_table.Datatype.isin(["rna", "wgs", "wes"]))
@@ -102,7 +101,6 @@ def checkDataPermission(today=None, datecol=config["date_col_dict"]["internal"])
     pr_table = mytracker.add_model_cols_to_prtable(
         cols=["ModelID", "PermissionToRelease"]
     )
-    mytracker.close_gumbo_client()
     problematic_prs = pr_table[
         ~(pr_table[datecol].isnull()) & (~pr_table["PermissionToRelease"])
     ]
@@ -134,7 +132,6 @@ def checkDataAvailability(
     prs = getPRToRelease(today=today)
     mytracker = track.SampleTracker()
     pr_table = mytracker.read_pr_table()
-    mytracker.close_gumbo_client()
     all_rna_prs = set(pr_table[pr_table.Datatype == "rna"].index)
     all_dna_prs = set(pr_table[pr_table.Datatype.isin(["wgs", "wes"])].index)
 
@@ -178,7 +175,6 @@ def makeAchillesChoiceTable(
     subset_pr_table = pr_table.loc[prs]
     subset_pr_table = subset_pr_table[subset_pr_table.BlacklistOmics != 1]
     mcs = set(subset_pr_table["ModelCondition"])
-    mytracker.close_gumbo_client()
     # we're only picking one PR per datatype (rna/dna) for each MC
     for mc in mcs:
         prs_in_mc = subset_pr_table[(subset_pr_table.ModelCondition == mc)]
@@ -294,7 +290,6 @@ def makeDefaultModelTable(
         & ((mc_table.Drug.isna()) | (mc_table.Drug == "DMSO"))
     ]
     models = set(mc_table.loc[list(mcs), "ModelID"])
-    mytracker.close_gumbo_client()
     # we're only picking one PR per datatype (rna/dna) for each Model
     for m in models:
         subset_mc_table = nondrugged_mc_table[nondrugged_mc_table.ModelID == m]
@@ -407,7 +402,6 @@ def makeProfileTable(prs, columns=config["profile_table_cols"]):
         "WESKit",
     ] = ""
 
-    mytracker.close_gumbo_client()
     return pr_table
 
 
