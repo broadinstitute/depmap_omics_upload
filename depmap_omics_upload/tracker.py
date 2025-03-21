@@ -865,7 +865,6 @@ def update(
     else:
         mytracker = SampleTracker()
         mytracker.write_seq_table(table)
-        mytracker.close_gumbo_client()
         print("updated gumbo")
         return None
 
