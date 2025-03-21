@@ -845,6 +845,112 @@ def makeModelLvMatrices(
                 pr2model_dict, portal, taiga_virtual=virtual_ids[portal]
             )
 
+def makeWESandWGSMatrices(virtual_ids,
+    folder=config["working_dir"] + config["sampleset"],
+    files_nummat_model={config["taiga_cn"]: config['virtual_filenames_nummat_cn_model_wgs_and_wes']},
+    files_nummat_pr={config["taiga_cn"]: config['virtual_filenames_nummat_cn_pr_wgs_and_wes']},
+    files_table_pr={config["taiga_cn"]: config['virtual_filenames_table_cn_pr_wgs_and_wes']},
+    today=None,
+    sampleid=config["sample_id"],
+    exclude=config["exclude"]):
+    """for each portal, save and upload data matrices, each matrix has a WGS and a WES
+
+    Args:
+        taiga_ids (dict): dictionary that maps portal name to virtual taiga dataset id
+
+    Returns:
+        prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
+    """
+    mytracker = track.SampleTracker()
+    pr_table = mytracker.read_pr_table()
+    prs_allportals = getPRToRelease(portals=virtual_ids.keys(), today=today)
+    for portal, prs_to_release in prs_allportals.items():
+        default_table = makeDefaultModelTable(prs_to_release)
+        prs_to_release_wes = pr_table[(pr_table.index.isin(prs_to_release)) & (pr_table.Datatype == "wes")].index.tolist()
+        prs_to_release_wgs = pr_table[(pr_table.index.isin(prs_to_release)) & (pr_table.Datatype == "wgs")].index.tolist()
+        
+        default_table_wes = default_table[default_table['ProfileID'].isin(prs_to_release_wes)]
+        default_table_wgs = default_table[default_table['ProfileID'].isin(prs_to_release_wgs)]
+        
+        pr2model_dict_wes = dict(list(zip(default_table_wes.ProfileID, default_table_wes.ModelID)))
+        pr2model_dict_wgs = dict(list(zip(default_table_wgs.ProfileID, default_table_wgs.ModelID)))
+        print("uploading respective WES/WGS matrices to", portal)
+        for latest_id, fn_dict in files_nummat_model.items():
+            for latest, virtual in fn_dict.items():
+                if latest not in exclude[portal]:
+                    uploadModelMatrix(
+                        pr2model_dict_wes,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual+"WES",
+                        "NumericMatrixCSV",
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WES",
+                    )
+                    uploadModelMatrix(
+                        pr2model_dict_wgs,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual+"WGS",
+                        "NumericMatrixCSV",
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WGS",
+                    )
+        for latest_id, fn_dict in files_nummat_pr.items():
+            for latest, virtual in fn_dict.items():
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release_wes,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual+"WES",
+                        "NumericMatrixCSV",
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WES",
+                    )
+                    uploadPRMatrix(
+                        prs_to_release_wgs,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual+"WGS",
+                        "NumericMatrixCSV",
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WGS",
+                    )
+        for latest_id, fn_dict in files_table_pr.items():
+            for latest, virtual in fn_dict.items():
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release_wes,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual+"WES",
+                        "TableCSV",
+                        pr_col=sampleid,
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WES",
+                    )
+                    uploadPRMatrix(
+                        prs_to_release_wgs,
+                        latest_id,
+                        virtual_ids[portal],
+                        latest,
+                        virtual+"WGS",
+                        "TableCSV",
+                        pr_col=sampleid,
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WGS",
+                    )
+
 
 def findLatestVersion(dataset, approved_only=True):
     highest = 0
