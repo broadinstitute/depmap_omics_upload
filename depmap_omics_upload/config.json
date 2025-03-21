@@ -134,10 +134,12 @@
         "stranded_proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1Stranded"
     },
     "virtual_filenames_nummat_cn_model": {
+        "globalGenomicFeatures_profile": "OmicsSignatures"
+    },
+    "virtual_filenames_nummat_cn_model_wgs_and_wes": {
         "merged_gene_cn_profile": "OmicsCNGene",
         "merged_absolute_gene_cn_profile": "OmicsAbsoluteCNGene",
         "merged_loh_profile": "OmicsLoH",
-        "globalGenomicFeatures_profile": "OmicsSignatures",
         "armLevelCNA_profile": "OmicsArmLevelCNA"
     },
     "virtual_filenames_nummat_mut_model": {
@@ -173,7 +175,9 @@
         "stranded_transcripts_expected_count_profile": "OmicsExpressionTranscriptsExpectedCountStrandedProfile"
     },
     "virtual_filenames_nummat_cn_pr": {
-        "globalGenomicFeatures_profile": "OmicsSignaturesProfile",
+        "globalGenomicFeatures_profile": "OmicsSignaturesProfile"
+    },
+    "virtual_filenames_nummat_cn_pr_wgs_and_wes": {
         "armLevelCNA_profile": "OmicsArmLevelCNAProfile"
     },
     "virtual_filenames_nummat_mut_pr": {},
@@ -181,7 +185,7 @@
     "virtual_filenames_table_fusion_pr": {
         "fusions_unfiltered_profile": "OmicsFusionUnfilteredProfile"
     },
-    "virtual_filenames_table_cn_pr": {
+    "virtual_filenames_table_cn_pr_wgs_and_wes": {
         "merged_segments_profile": "OmicsCNSegmentsProfile",
         "merged_absolute_segments_profile": "OmicsAbsoluteCNSegmentsProfile"
     },
