@@ -137,7 +137,7 @@
         "globalGenomicFeatures_profile": "OmicsSignatures"
     },
     "virtual_filenames_nummat_cn_model_wgs_and_wes": {
-        "merged_gene_cn_profile": "OmicsCNGene",
+        "merged_gene_cn_profile_for_achilles": "OmicsCNGene",
         "merged_absolute_gene_cn_profile": "OmicsAbsoluteCNGene",
         "merged_loh_profile": "OmicsLoH",
         "armLevelCNA_profile": "OmicsArmLevelCNA"
