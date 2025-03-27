@@ -128,6 +128,7 @@
         "Source",
         "shared_to_dbgap"
     ],
+    "omics_id_mapping_table_name": "merged_table.20250327_1239selcols",
     "virtual_filenames_nummat_exp_model": {
         "proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1",
         "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichment",
@@ -137,10 +138,7 @@
         "globalGenomicFeatures_profile": "OmicsSignatures"
     },
     "virtual_filenames_nummat_cn_model_wgs_and_wes": {
-        "merged_gene_cn_profile_for_achilles": "OmicsCNGene",
-        "merged_absolute_gene_cn_profile": "OmicsAbsoluteCNGene",
-        "merged_loh_profile": "OmicsLoH",
-        "armLevelCNA_profile": "OmicsArmLevelCNA"
+        "merged_gene_cn_profile_for_achilles": "OmicsCNGene"
     },
     "virtual_filenames_nummat_mut_model": {
         "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
@@ -177,17 +175,14 @@
     "virtual_filenames_nummat_cn_pr": {
         "globalGenomicFeatures_profile": "OmicsSignaturesProfile"
     },
-    "virtual_filenames_nummat_cn_pr_wgs_and_wes": {
-        "armLevelCNA_profile": "OmicsArmLevelCNAProfile"
-    },
+    "virtual_filenames_nummat_cn_pr_wgs_and_wes": {},
     "virtual_filenames_nummat_mut_pr": {},
     "virtual_filenames_germline_pr": {},
     "virtual_filenames_table_fusion_pr": {
         "fusions_unfiltered_profile": "OmicsFusionUnfilteredProfile"
     },
     "virtual_filenames_table_cn_pr_wgs_and_wes": {
-        "merged_segments_profile": "OmicsCNSegmentsProfile",
-        "merged_absolute_segments_profile": "OmicsAbsoluteCNSegmentsProfile"
+        "merged_segments_profile": "OmicsCNSegmentsProfile"
     },
     "virtual_filenames_table_mut_pr": {
         "somaticMutations_profile": "OmicsSomaticMutationsProfile",
