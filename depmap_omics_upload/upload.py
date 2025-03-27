@@ -853,7 +853,9 @@ def makeWESandWGSMatrices(virtual_ids,
     files_table_pr={config["taiga_cn"]: config['virtual_filenames_table_cn_pr_wgs_and_wes']},
     today=None,
     sampleid=config["sample_id"],
-    exclude=config["exclude"]):
+    exclude=config["exclude"],
+    omics_id_mapping_table_name="",
+    ):
     """for each portal, save and upload data matrices, each matrix has a WGS and a WES
 
     Args:
@@ -862,19 +864,17 @@ def makeWESandWGSMatrices(virtual_ids,
     Returns:
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
-    mytracker = track.SampleTracker()
-    pr_table = mytracker.read_pr_table()
-    prs_allportals = getPRToRelease(portals=virtual_ids.keys(), today=today)
-    for portal, prs_to_release in prs_allportals.items():
-        default_table = makeDefaultModelTable(prs_to_release)
-        prs_to_release_wes = pr_table[(pr_table.index.isin(prs_to_release)) & (pr_table.Datatype == "wes")].index.tolist()
-        prs_to_release_wgs = pr_table[(pr_table.index.isin(prs_to_release)) & (pr_table.Datatype == "wgs")].index.tolist()
+    tc = TaigaClient()
+    for portal, taiga_id in virtual_ids.items():
+        omics_id_mapping_table = tc.get(name=virtual_ids[portal], file=omics_id_mapping_table_name)
+        prs_to_release_wes = omics_id_mapping_table[omics_id_mapping_table.datatype == 'wes'].profile_id.tolist()
+        prs_to_release_wgs = omics_id_mapping_table[omics_id_mapping_table.datatype == 'wgs'].profile_id.tolist()
         
-        default_table_wes = default_table[default_table['ProfileID'].isin(prs_to_release_wes)]
-        default_table_wgs = default_table[default_table['ProfileID'].isin(prs_to_release_wgs)]
+        default_table_wes = omics_id_mapping_table[(omics_id_mapping_table['is_default_entry'] == True) & (omics_id_mapping_table.datatype == 'wes')]
+        default_table_wgs = omics_id_mapping_table[(omics_id_mapping_table['is_default_entry'] == True) & (omics_id_mapping_table.datatype == 'wgs')]
         
-        pr2model_dict_wes = dict(list(zip(default_table_wes.ProfileID, default_table_wes.ModelID)))
-        pr2model_dict_wgs = dict(list(zip(default_table_wgs.ProfileID, default_table_wgs.ModelID)))
+        pr2model_dict_wes = dict(list(zip(default_table_wes.profile_id, default_table_wes.model_id)))
+        pr2model_dict_wgs = dict(list(zip(default_table_wgs.profile_id, default_table_wgs.model_id)))
         print("uploading respective WES/WGS matrices to", portal)
         for latest_id, fn_dict in files_nummat_model.items():
             for latest, virtual in fn_dict.items():
@@ -882,7 +882,7 @@ def makeWESandWGSMatrices(virtual_ids,
                     uploadModelMatrix(
                         pr2model_dict_wes,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual+"WES",
                         "NumericMatrixCSV",
@@ -893,7 +893,7 @@ def makeWESandWGSMatrices(virtual_ids,
                     uploadModelMatrix(
                         pr2model_dict_wgs,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual+"WGS",
                         "NumericMatrixCSV",
@@ -907,7 +907,7 @@ def makeWESandWGSMatrices(virtual_ids,
                     uploadPRMatrix(
                         prs_to_release_wes,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual+"WES",
                         "NumericMatrixCSV",
@@ -918,7 +918,7 @@ def makeWESandWGSMatrices(virtual_ids,
                     uploadPRMatrix(
                         prs_to_release_wgs,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual+"WGS",
                         "NumericMatrixCSV",
@@ -932,7 +932,7 @@ def makeWESandWGSMatrices(virtual_ids,
                     uploadPRMatrix(
                         prs_to_release_wes,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual+"WES",
                         "TableCSV",
@@ -943,7 +943,7 @@ def makeWESandWGSMatrices(virtual_ids,
                     uploadPRMatrix(
                         prs_to_release_wgs,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual+"WGS",
                         "TableCSV",
