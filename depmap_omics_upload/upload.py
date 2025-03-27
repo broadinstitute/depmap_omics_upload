@@ -797,6 +797,7 @@ def makeModelLvMatrices(
     today=None,
     sampleid=config["sample_id"],
     exclude=config["exclude"],
+    omics_id_mapping_table_name="",
 ):
     """for each portal, save and upload profile-indexed data matrices
 
