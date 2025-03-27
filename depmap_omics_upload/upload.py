@@ -32,7 +32,6 @@ config["latest2fn_nummat_pr"] = {
 }
 
 config["latest2fn_table_pr"] = {
-    config["taiga_cn"]: config["virtual_filenames_table_cn_pr"],
     config["taiga_fusion"]: config["virtual_filenames_table_fusion_pr"],
     config["taiga_mutation"]: config["virtual_filenames_table_mut_pr"],
 }
@@ -811,6 +810,7 @@ def makeModelLvMatrices(
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
     tc = TaigaClient()
+    print("!")
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = tc.get(name=taiga_id, file=omics_id_mapping_table_name)
         default_table = omics_id_mapping_table[omics_id_mapping_table['is_default_entry'] == True]
