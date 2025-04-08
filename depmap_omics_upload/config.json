@@ -135,6 +135,7 @@
         "stranded_proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1Stranded"
     },
     "virtual_filenames_nummat_cn_model": {
+        "merged_gene_cn_profile": "OmicsCNGene",
         "globalGenomicFeatures_profile": "OmicsSignatures"
     },
     "virtual_filenames_nummat_cn_model_wgs_and_wes": {
