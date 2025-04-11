@@ -178,7 +178,9 @@
     "virtual_filenames_nummat_cn_pr": {
         "globalGenomicFeatures_profile": "OmicsSignaturesProfile"
     },
-    "virtual_filenames_nummat_cn_pr_wgs_and_wes": {},
+    "virtual_filenames_nummat_cn_pr_wgs_and_wes": {
+        "merged_gene_cn_profile_for_achilles": "OmicsCNGeneProfile"
+    },
     "virtual_filenames_nummat_mut_pr": {},
     "virtual_filenames_germline_pr": {},
     "virtual_filenames_table_fusion_pr": {
