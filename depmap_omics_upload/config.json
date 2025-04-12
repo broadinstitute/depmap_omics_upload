@@ -158,7 +158,6 @@
         "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
         "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
         "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne",
-        "binary_mutation_brunello": "OmicsGuideMutationsBinaryBrunello",
         "binary_mutation_tkov3": "OmicsGuideMutationsBinaryTKOv3"
     },
     "virtual_filenames_nummat_exp_pr": {
