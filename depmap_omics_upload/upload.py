@@ -15,24 +15,24 @@ config = json.loads(configdata)  # type: ignore
 
 config["latest2fn_nummat_model"] = {
     config["taiga_cn"]: config["virtual_filenames_nummat_cn_model"],
-    config["taiga_expression"]: config["virtual_filenames_nummat_exp_model"],
+    # config["taiga_expression"]: config["virtual_filenames_nummat_exp_model"],
     config["taiga_mutation"]: config["virtual_filenames_nummat_mut_model"],
 }
 
 config["latest2fn_table_model"] = {
     config["taiga_cn"]: config["virtual_filenames_table_cn_model"],
-    config["taiga_fusion"]: config["virtual_filenames_table_fusion_model"],
+    # config["taiga_fusion"]: config["virtual_filenames_table_fusion_model"],
     config["taiga_mutation"]: config["virtual_filenames_table_mut_model"],
 }
 
 config["latest2fn_nummat_pr"] = {
     config["taiga_cn"]: config["virtual_filenames_nummat_cn_pr"],
-    config["taiga_expression"]: config["virtual_filenames_nummat_exp_pr"],
+    # config["taiga_expression"]: config["virtual_filenames_nummat_exp_pr"],
     config["taiga_mutation"]: config["virtual_filenames_nummat_mut_pr"],
 }
 
 config["latest2fn_table_pr"] = {
-    config["taiga_fusion"]: config["virtual_filenames_table_fusion_pr"],
+    # config["taiga_fusion"]: config["virtual_filenames_table_fusion_pr"],
     config["taiga_mutation"]: config["virtual_filenames_table_mut_pr"],
 }
 config["latest2fn_raw_pr"] = {
