@@ -128,7 +128,7 @@
         "Source",
         "shared_to_dbgap"
     ],
-    "omics_id_mapping_table_name": "merged_table.20250327_1239selcols",
+    "omics_id_mapping_table_name": "OmicsProfiles",
     "virtual_filenames_nummat_exp_model": {
         "proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1",
         "gene_set_enrichment_profile": "OmicsExpressionGeneSetEnrichment",
