@@ -157,8 +157,7 @@
     "virtual_filenames_guidemut": {
         "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
         "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
-        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne",
-        "binary_mutation_tkov3": "OmicsGuideMutationsBinaryTKOv3"
+        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne"
     },
     "virtual_filenames_nummat_exp_pr": {
         "genes_expectedCount_profile": "OmicsExpressionGenesExpectedCountProfile",
