@@ -739,7 +739,7 @@ def makePRLvMatrices(
     client = create_taiga_client_v3()
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
-        prs_to_release = omics_id_mapping_table['profile_id'].tolist()
+        prs_to_release = omics_id_mapping_table['ProfileID'].tolist()
         print("uploading profile-level matrices to ", portal)
         for latest_id, fn_dict in files_nummat.items():
             for latest, virtual in fn_dict.items():
@@ -811,7 +811,7 @@ def makeModelLvMatrices(
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
         default_table = omics_id_mapping_table[omics_id_mapping_table['is_default_entry'] == True]
-        pr2model_dict = dict(list(zip(default_table.profile_id, default_table.model_id)))
+        pr2model_dict = dict(list(zip(default_table.ProfileID, default_table.ModelID)))
         h.dictToFile(pr2model_dict, folder + "/" + portal + "_pr2model_renaming.json")
         print("uploading model-level matrices to", portal)
         for latest_id, fn_dict in files_nummat.items():
@@ -868,14 +868,14 @@ def makeWESandWGSMatrices(virtual_ids,
     client = create_taiga_client_v3()
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
-        prs_to_release_wes = omics_id_mapping_table[omics_id_mapping_table.datatype == 'wes'].profile_id.tolist()
-        prs_to_release_wgs = omics_id_mapping_table[omics_id_mapping_table.datatype == 'wgs'].profile_id.tolist()
+        prs_to_release_wes = omics_id_mapping_table[omics_id_mapping_table.DataType == 'wes'].ProfileID.tolist()
+        prs_to_release_wgs = omics_id_mapping_table[omics_id_mapping_table.DataType == 'wgs'].ProfileID.tolist()
         
-        default_table_wes = omics_id_mapping_table[(omics_id_mapping_table['is_default_entry'] == True) & (omics_id_mapping_table.datatype == 'wes')]
-        default_table_wgs = omics_id_mapping_table[(omics_id_mapping_table['is_default_entry'] == True) & (omics_id_mapping_table.datatype == 'wgs')]
+        default_table_wes = omics_id_mapping_table[(omics_id_mapping_table['is_default_entry'] == True) & (omics_id_mapping_table.DataType == 'wes')]
+        default_table_wgs = omics_id_mapping_table[(omics_id_mapping_table['is_default_entry'] == True) & (omics_id_mapping_table.DataType == 'wgs')]
         
-        pr2model_dict_wes = dict(list(zip(default_table_wes.profile_id, default_table_wes.model_id)))
-        pr2model_dict_wgs = dict(list(zip(default_table_wgs.profile_id, default_table_wgs.model_id)))
+        pr2model_dict_wes = dict(list(zip(default_table_wes.ProfileID, default_table_wes.ModelID)))
+        pr2model_dict_wgs = dict(list(zip(default_table_wgs.ProfileID, default_table_wgs.ModelID)))
         print("uploading respective WES/WGS matrices to", portal)
         for latest_id, fn_dict in files_nummat_model.items():
             for latest, virtual in fn_dict.items():
