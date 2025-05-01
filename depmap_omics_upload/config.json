@@ -209,7 +209,7 @@
         "dmc": [],
         "public": [
             "structuralVariants_profile",
-            "sv_mat_with_entrez_profile",
+            "structuralVariants_geneLevelMatrix_profile",
             "armLevelCNA_profile"
 	]
     },
