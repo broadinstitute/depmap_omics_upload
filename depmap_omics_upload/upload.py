@@ -4,7 +4,8 @@ from datetime import date
 
 from depmap_omics_upload.mgenepy.utils import helper as h
 from depmap_omics_upload import tracker as track
-from taigapy import TaigaClient
+from taigapy import TaigaClient, create_taiga_client_v3
+from taigapy.client_v3 import UploadedFile, LocalFormat
 import json
 import pkgutil
 
@@ -15,25 +16,24 @@ config = json.loads(configdata)  # type: ignore
 
 config["latest2fn_nummat_model"] = {
     config["taiga_cn"]: config["virtual_filenames_nummat_cn_model"],
-    config["taiga_expression"]: config["virtual_filenames_nummat_exp_model"],
+    # config["taiga_expression"]: config["virtual_filenames_nummat_exp_model"],
     config["taiga_mutation"]: config["virtual_filenames_nummat_mut_model"],
 }
 
 config["latest2fn_table_model"] = {
     config["taiga_cn"]: config["virtual_filenames_table_cn_model"],
-    config["taiga_fusion"]: config["virtual_filenames_table_fusion_model"],
+    # config["taiga_fusion"]: config["virtual_filenames_table_fusion_model"],
     config["taiga_mutation"]: config["virtual_filenames_table_mut_model"],
 }
 
 config["latest2fn_nummat_pr"] = {
     config["taiga_cn"]: config["virtual_filenames_nummat_cn_pr"],
-    config["taiga_expression"]: config["virtual_filenames_nummat_exp_pr"],
+    # config["taiga_expression"]: config["virtual_filenames_nummat_exp_pr"],
     config["taiga_mutation"]: config["virtual_filenames_nummat_mut_pr"],
 }
 
 config["latest2fn_table_pr"] = {
-    config["taiga_cn"]: config["virtual_filenames_table_cn_pr"],
-    config["taiga_fusion"]: config["virtual_filenames_table_fusion_pr"],
+    # config["taiga_fusion"]: config["virtual_filenames_table_fusion_pr"],
     config["taiga_mutation"]: config["virtual_filenames_table_mut_pr"],
 }
 config["latest2fn_raw_pr"] = {
@@ -420,7 +420,7 @@ def initVirtualDatasets(
                 {
                     "path": "/dev/null",
                     "name": "init",
-                    "format": "Raw",
+                    "format": LocalFormat.RAW,
                     "encoding": "utf-8",
                 }
             ],
@@ -456,8 +456,8 @@ def uploadPRMatrix(
         change_desc (str): change description on taiga virtual
     """
     print("loading ", latest_fn, " from latest")
-    tc = TaigaClient()
-    to_subset = tc.get(name=taiga_latest, file=latest_fn)
+    client = create_taiga_client_v3()
+    to_subset = client.get(name=taiga_latest, file=latest_fn)
 
     if "EntrezGeneID" in set(to_subset.columns):
         print("making sure Entrez column is Int64")
@@ -480,18 +480,17 @@ def uploadPRMatrix(
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
 
     print("uploading ", virtual_fn, " to virtual")
-    tc.update_dataset(
-        dataset_id=taiga_virtual,
-        changes_description=change_desc,
-        upload_files=[
-            {
-                "path": folder + virtual_fn + save_format,
-                "name": virtual_fn,
-                "format": matrix_format,
-                "encoding": "utf-8",
-            },
+    client.update_dataset(
+        permaname=taiga_virtual,
+        reason=change_desc,
+        additions=[
+            UploadedFile(
+                local_path=folder + virtual_fn + save_format,
+                name=virtual_fn,
+                format=matrix_format,
+                encoding="utf8",
+            ),
         ],
-        add_all_existing_files=True,
     )
 
 
@@ -521,8 +520,8 @@ def uploadModelMatrix(
         change_desc (str): change description on taiga virtual
     """
     print("loading ", latest_fn, " from latest")
-    tc = TaigaClient()
-    to_subset = tc.get(name=taiga_latest, file=latest_fn)
+    client = create_taiga_client_v3()
+    to_subset = client.get(name=taiga_latest, file=latest_fn)
 
     if "EntrezGeneID" in set(to_subset.columns):
         print("making sure Entrez column is Int64")
@@ -537,7 +536,7 @@ def uploadModelMatrix(
         subset_mat = to_subset[to_subset.index.isin(set(pr2model_dict.keys()))].rename(
             index=pr2model_dict
         )
-        subset_mat.to_csv(folder + virtual_fn + ".csv")
+        subset_mat.dropna(axis=1, how='all').to_csv(folder + virtual_fn + ".csv")
     else:
         subset_mat = to_subset[
             to_subset[pr_col].isin(set(pr2model_dict.keys()))
@@ -545,19 +544,19 @@ def uploadModelMatrix(
         subset_mat = subset_mat.rename(columns={sampleid: "ModelID"})
         subset_mat.to_csv(folder + virtual_fn + ".csv", index=False)
 
+
     print("uploading ", virtual_fn, " to virtual")
-    tc.update_dataset(
-        dataset_id=taiga_virtual,
-        changes_description=change_desc,
-        upload_files=[
-            {
-                "path": folder + virtual_fn + ".csv",
-                "name": virtual_fn,
-                "format": matrix_format,
-                "encoding": "utf-8",
-            },
+    client.update_dataset(
+        permaname=taiga_virtual,
+        reason=change_desc,
+        additions=[
+            UploadedFile(
+                local_path=folder + virtual_fn + ".csv",
+                name=virtual_fn,
+                format=matrix_format,
+                encoding="utf8",
+            ),
         ],
-        add_all_existing_files=True,
     )
 
 
@@ -582,8 +581,8 @@ def uploadBinaryGuideMutationMatrixModel(
     for latest_fn, virtual_fn in fn_mapping.items():
         # load pr-id indexed matrices for the current quarter
         print("Guide mutation matrix: loading from taiga latest")
-        tc = TaigaClient()
-        germline = tc.get(name=taiga_latest, file=latest_fn)
+        client = create_taiga_client_v3()
+        germline = client.get(name=taiga_latest, file=latest_fn)
 
         # subset and rename
         print("Guide mutation matrix: subsetting and renaming")
@@ -599,18 +598,17 @@ def uploadBinaryGuideMutationMatrixModel(
 
         # upload to taiga
         print("Guide mutation: uploading to taiga")
-        tc.update_dataset(
-            dataset_id=taiga_virtual,
-            changes_description="adding model-level germline matrix",
-            upload_files=[
-                {
-                    "path": folder + virtual_fn + ".csv",
-                    "name": virtual_fn,
-                    "format": "TableCSV",
-                    "encoding": "utf-8",
-                },
+        client.update_dataset(
+            permaname=taiga_virtual,
+            reason="adding model-level germline matrix",
+            additions=[
+                UploadedFile(
+                    local_path=folder + virtual_fn + ".csv",
+                    name=virtual_fn,
+                    format=LocalFormat.CSV_TABLE,
+                    encoding="utf8",
+                ),
             ],
-            add_all_existing_files=True,
         )
 
 
@@ -636,8 +634,8 @@ def uploadMSRepeatProfile(
     """
     for latest_fn, virtual_fn in fn_mapping.items():
         print("loading ", latest_fn, " from latest")
-        tc = TaigaClient()
-        to_subset = tc.get(name=taiga_latest, file=latest_fn)
+        client = create_taiga_client_v3()
+        to_subset = client.get(name=taiga_latest, file=latest_fn)
 
         print("subsetting ", latest_fn)
         subset_mat = to_subset.iloc[:, :num_static_cols].join(
@@ -646,18 +644,17 @@ def uploadMSRepeatProfile(
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
 
         print("uploading ", virtual_fn, " to virtual")
-        tc.update_dataset(
-            dataset_id=taiga_virtual,
-            changes_description="adding " + virtual_fn,
-            upload_files=[
-                {
-                    "path": folder + virtual_fn + save_format,
-                    "name": virtual_fn,
-                    "format": "TableCSV",
-                    "encoding": "utf-8",
-                },
+        client.update_dataset(
+            permaname=taiga_virtual,
+            reason="adding " + virtual_fn,
+            additions=[
+                UploadedFile(
+                    local_path=folder + virtual_fn + save_format,
+                    name=virtual_fn,
+                    format=LocalFormat.CSV_TABLE,
+                    encoding="utf8",
+                ),
             ],
-            add_all_existing_files=True,
         )
 
 
@@ -695,13 +692,13 @@ def uploadAuxTables(
                 {
                     "path": folder + "/" + portal + "_" + ach_table_name + ".csv",
                     "name": "OmicsDefaultModelConditionProfiles",
-                    "format": "TableCSV",
+                    "format": LocalFormat.CSV_TABLE,
                     "encoding": "utf-8",
                 },
                 {
                     "path": folder + "/" + portal + "_" + default_table_name + ".csv",
                     "name": "OmicsDefaultModelProfiles",
-                    "format": "TableCSV",
+                    "format": LocalFormat.CSV_TABLE,
                     "encoding": "utf-8",
                 },
                 {
@@ -712,7 +709,7 @@ def uploadAuxTables(
                     + release_pr_table_name
                     + ".csv",
                     "name": "OmicsProfiles",
-                    "format": "TableCSV",
+                    "format": LocalFormat.CSV_TABLE,
                     "encoding": "utf-8",
                 },
             ],
@@ -729,6 +726,7 @@ def makePRLvMatrices(
     today=None,
     sampleid=config["sample_id"],
     exclude=config["exclude"],
+    omics_id_mapping_table_name=config["omics_id_mapping_table_name"]
 ):
     """for each portal, save and upload profile-indexed data matrices
 
@@ -738,8 +736,10 @@ def makePRLvMatrices(
     Returns:
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
-    prs_allportals = getPRToRelease(portals=virtual_ids.keys(), today=today)
-    for portal, prs_to_release in prs_allportals.items():
+    client = create_taiga_client_v3()
+    for portal, taiga_id in virtual_ids.items():
+        omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
+        prs_to_release = omics_id_mapping_table['ProfileID'].tolist()
         print("uploading profile-level matrices to ", portal)
         for latest_id, fn_dict in files_nummat.items():
             for latest, virtual in fn_dict.items():
@@ -747,10 +747,10 @@ def makePRLvMatrices(
                     uploadPRMatrix(
                         prs_to_release,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual,
-                        "NumericMatrixCSV",
+                        LocalFormat.CSV_MATRIX,
                         pr_col="index",
                         folder=folder + "/",
                         change_desc="adding " + virtual,
@@ -761,10 +761,10 @@ def makePRLvMatrices(
                     uploadPRMatrix(
                         prs_to_release,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual,
-                        "TableCSV",
+                        LocalFormat.CSV_TABLE,
                         pr_col=sampleid,
                         folder=folder + "/",
                         change_desc="adding " + virtual,
@@ -775,17 +775,17 @@ def makePRLvMatrices(
                     uploadPRMatrix(
                         prs_to_release,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual,
-                        "Raw",
+                        LocalFormat.RAW,
                         pr_col="Tumor_Sample_Barcode",
                         folder=folder + "/",
                         change_desc="adding " + virtual,
                         save_format=".maf",
                         save_sep="\t",
                     )
-        uploadMSRepeatProfile(prs_to_release, virtual_ids[portal], folder=folder + "/")
+        uploadMSRepeatProfile(prs_to_release, taiga_id, folder=folder + "/")
 
 
 def makeModelLvMatrices(
@@ -797,6 +797,7 @@ def makeModelLvMatrices(
     today=None,
     sampleid=config["sample_id"],
     exclude=config["exclude"],
+    omics_id_mapping_table_name=config["omics_id_mapping_table_name"],
 ):
     """for each portal, save and upload profile-indexed data matrices
 
@@ -806,9 +807,10 @@ def makeModelLvMatrices(
     Returns:
         prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
     """
-    prs_allportals = getPRToRelease(portals=virtual_ids.keys(), today=today)
-    for portal, prs_to_release in prs_allportals.items():
-        default_table = makeDefaultModelTable(prs_to_release)
+    client = create_taiga_client_v3()
+    for portal, taiga_id in virtual_ids.items():
+        omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
+        default_table = omics_id_mapping_table[omics_id_mapping_table['is_default_entry'] == True]
         pr2model_dict = dict(list(zip(default_table.ProfileID, default_table.ModelID)))
         h.dictToFile(pr2model_dict, folder + "/" + portal + "_pr2model_renaming.json")
         print("uploading model-level matrices to", portal)
@@ -818,10 +820,10 @@ def makeModelLvMatrices(
                     uploadModelMatrix(
                         pr2model_dict,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual,
-                        "NumericMatrixCSV",
+                        LocalFormat.CSV_MATRIX,
                         pr_col="index",
                         folder=folder + "/",
                         change_desc="adding " + virtual,
@@ -832,18 +834,124 @@ def makeModelLvMatrices(
                     uploadModelMatrix(
                         pr2model_dict,
                         latest_id,
-                        virtual_ids[portal],
+                        taiga_id,
                         latest,
                         virtual,
-                        "TableCSV",
+                        LocalFormat.CSV_TABLE,
                         pr_col=sampleid,
                         folder=folder + "/",
                         change_desc="adding " + virtual,
                     )
         if upload_guide_matrices:
             uploadBinaryGuideMutationMatrixModel(
-                pr2model_dict, portal, taiga_virtual=virtual_ids[portal]
+                pr2model_dict, portal, taiga_virtual=taiga_id
             )
+
+def makeWESandWGSMatrices(virtual_ids,
+    folder=config["working_dir"] + config["sampleset"],
+    files_nummat_model={config["taiga_cn"]: config['virtual_filenames_nummat_cn_model_wgs_and_wes']},
+    files_nummat_pr={config["taiga_cn"]: config['virtual_filenames_nummat_cn_pr_wgs_and_wes']},
+    files_table_pr={config["taiga_cn"]: config['virtual_filenames_table_cn_pr_wgs_and_wes']},
+    today=None,
+    sampleid=config["sample_id"],
+    exclude=config["exclude"],
+    omics_id_mapping_table_name=config["omics_id_mapping_table_name"],
+    ):
+    """for each portal, save and upload data matrices, each matrix has a WGS and a WES
+
+    Args:
+        taiga_ids (dict): dictionary that maps portal name to virtual taiga dataset id
+
+    Returns:
+        prs (dict{(portal: list of PRs)}): for each portal, list of profile IDs
+    """
+    client = create_taiga_client_v3()
+    for portal, taiga_id in virtual_ids.items():
+        omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
+        prs_to_release_wes = omics_id_mapping_table[omics_id_mapping_table.DataType == 'wes'].ProfileID.tolist()
+        prs_to_release_wgs = omics_id_mapping_table[omics_id_mapping_table.DataType == 'wgs'].ProfileID.tolist()
+        
+        default_table_wes = omics_id_mapping_table[(omics_id_mapping_table['is_default_entry'] == True) & (omics_id_mapping_table.DataType == 'wes')]
+        default_table_wgs = omics_id_mapping_table[(omics_id_mapping_table['is_default_entry'] == True) & (omics_id_mapping_table.DataType == 'wgs')]
+        
+        pr2model_dict_wes = dict(list(zip(default_table_wes.ProfileID, default_table_wes.ModelID)))
+        pr2model_dict_wgs = dict(list(zip(default_table_wgs.ProfileID, default_table_wgs.ModelID)))
+        print("uploading respective WES/WGS matrices to", portal)
+        for latest_id, fn_dict in files_nummat_model.items():
+            for latest, virtual in fn_dict.items():
+                if latest not in exclude[portal]:
+                    uploadModelMatrix(
+                        pr2model_dict_wes,
+                        latest_id,
+                        taiga_id,
+                        latest,
+                        virtual+"WES",
+                        LocalFormat.CSV_MATRIX,
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WES",
+                    )
+                    uploadModelMatrix(
+                        pr2model_dict_wgs,
+                        latest_id,
+                        taiga_id,
+                        latest,
+                        virtual+"WGS",
+                        LocalFormat.CSV_MATRIX,
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WGS",
+                    )
+        for latest_id, fn_dict in files_nummat_pr.items():
+            for latest, virtual in fn_dict.items():
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release_wes,
+                        latest_id,
+                        taiga_id,
+                        latest,
+                        virtual+"WES",
+                        LocalFormat.CSV_MATRIX,
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WES",
+                    )
+                    uploadPRMatrix(
+                        prs_to_release_wgs,
+                        latest_id,
+                        taiga_id,
+                        latest,
+                        virtual+"WGS",
+                        LocalFormat.CSV_MATRIX,
+                        pr_col="index",
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WGS",
+                    )
+        for latest_id, fn_dict in files_table_pr.items():
+            for latest, virtual in fn_dict.items():
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        prs_to_release_wes,
+                        latest_id,
+                        taiga_id,
+                        latest,
+                        virtual+"WES",
+                        LocalFormat.CSV_TABLE,
+                        pr_col=sampleid,
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WES",
+                    )
+                    uploadPRMatrix(
+                        prs_to_release_wgs,
+                        latest_id,
+                        taiga_id,
+                        latest,
+                        virtual+"WGS",
+                        LocalFormat.CSV_TABLE,
+                        pr_col=sampleid,
+                        folder=folder + "/",
+                        change_desc="adding " + virtual+"WGS",
+                    )
 
 
 def findLatestVersion(dataset, approved_only=True):
