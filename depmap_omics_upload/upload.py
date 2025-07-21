@@ -431,6 +431,7 @@ def initVirtualDatasets(
 
 def uploadPRMatrix(
     prs,
+    mapping_table,
     taiga_latest,
     taiga_virtual,
     latest_fn,
@@ -472,11 +473,17 @@ def uploadPRMatrix(
         subset_mat = to_subset[to_subset.index.isin(prs)]
         subset_mat.to_csv(folder + virtual_fn + save_format)
     elif pr_col == "Tumor_Sample_Barcode":
-        subset_mat = to_subset[to_subset[pr_col].isin(prs)]
+        subset_mat['isDefaultEntryForModel'] = to_subset[pr_col].map(dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC)))
+        subset_mat = to_subset[to_subset[pr_col].isin(prs)].replace(
+            {pr_col:dict(list(zip(mapping_table.omics_sequencing_id, mapping_table.ModelConditionID)))}
+        )
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
     else:
-        subset_mat = to_subset[to_subset[pr_col].isin(prs)]
-        subset_mat = subset_mat.rename(columns={pr_col: "ProfileID"})
+        subset_mat['isDefaultEntryForModel'] = to_subset[pr_col].map(dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC)))
+        subset_mat = to_subset[to_subset[pr_col].isin(prs)].replace(
+            {pr_col:dict(list(zip(mapping_table.omics_sequencing_id, mapping_table.ModelConditionID)))}
+        )
+        subset_mat = subset_mat.rename(columns={pr_col: "ModelConditionID"})
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
 
     print("uploading ", virtual_fn, " to virtual")
@@ -738,13 +745,14 @@ def makePRLvMatrices(
     client = create_taiga_client_v3()
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
-        prs_to_release = omics_id_mapping_table['ProfileID'].tolist()
+        seqs_to_release = omics_id_mapping_table['omics_sequencing_id'].tolist()
         print("uploading profile-level matrices to ", portal)
         for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
                 if latest not in exclude[portal]:
                     uploadPRMatrix(
-                        prs_to_release,
+                        seqs_to_release,
+                        omics_id_mapping_table,
                         latest_id,
                         taiga_id,
                         latest,
@@ -758,7 +766,8 @@ def makePRLvMatrices(
             for latest, virtual in fn_dict.items():
                 if latest not in exclude[portal]:
                     uploadPRMatrix(
-                        prs_to_release,
+                        seqs_to_release,
+                        omics_id_mapping_table,
                         latest_id,
                         taiga_id,
                         latest,
@@ -770,7 +779,7 @@ def makePRLvMatrices(
                         save_format=".maf",
                         save_sep="\t",
                     )
-        uploadMSRepeatProfile(prs_to_release, taiga_id, folder=folder + "/")
+        uploadMSRepeatProfile(seqs_to_release, omics_id_mapping_table, taiga_id, folder=folder + "/")
 
 def make_seq_to_model_dict(portal, release_date, processed_seqs, date_col_dict=config["date_col_dict"]):
     """
