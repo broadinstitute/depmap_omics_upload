@@ -430,7 +430,6 @@ def initVirtualDatasets(
 
 
 def uploadPRMatrix(
-    prs,
     mapping_table,
     taiga_latest,
     taiga_virtual,
@@ -459,6 +458,8 @@ def uploadPRMatrix(
     print("loading ", latest_fn, " from latest")
     client = create_taiga_client_v3()
     to_subset = client.get(name=taiga_latest, file=latest_fn)
+
+    prs = mapping_table['omics_sequencing_id'].tolist()
 
     if "EntrezGeneID" in set(to_subset.columns):
         print("making sure Entrez column is Int64")
@@ -620,7 +621,7 @@ def uploadBinaryGuideMutationMatrixModel(
 
 
 def uploadMSRepeatProfile(
-    prs,
+    mapping_table,
     taiga_virtual,
     taiga_latest=config["taiga_cn"],
     fn_mapping=config["virtual_filenames_ms_repeat_pr"],
@@ -639,6 +640,7 @@ def uploadMSRepeatProfile(
         folder (str): where the file should be stores before uploading to virtual
         num_static_cols (int): number of columns in the df that are static/not profiles
     """
+    prs = mapping_table['omics_sequencing_id'].tolist()
     for latest_fn, virtual_fn in fn_mapping.items():
         print("loading ", latest_fn, " from latest")
         client = create_taiga_client_v3()
@@ -729,7 +731,6 @@ def makePRLvMatrices(
     folder=config["working_dir"] + config["sampleset"],
     files_table=config["latest2fn_table_pr"],
     files_raw=config["latest2fn_raw_pr"],
-    today=None,
     sampleid=config["sample_id"],
     exclude=config["exclude"],
     omics_id_mapping_table_name=config["omics_id_mapping_table_name"]
@@ -751,7 +752,6 @@ def makePRLvMatrices(
             for latest, virtual in fn_dict.items():
                 if latest not in exclude[portal]:
                     uploadPRMatrix(
-                        seqs_to_release,
                         omics_id_mapping_table,
                         latest_id,
                         taiga_id,
@@ -766,7 +766,6 @@ def makePRLvMatrices(
             for latest, virtual in fn_dict.items():
                 if latest not in exclude[portal]:
                     uploadPRMatrix(
-                        seqs_to_release,
                         omics_id_mapping_table,
                         latest_id,
                         taiga_id,
@@ -779,7 +778,7 @@ def makePRLvMatrices(
                         save_format=".maf",
                         save_sep="\t",
                     )
-        uploadMSRepeatProfile(seqs_to_release, omics_id_mapping_table, taiga_id, folder=folder + "/")
+        uploadMSRepeatProfile(omics_id_mapping_table, taiga_id, folder=folder + "/")
 
 def make_seq_to_model_dict(portal, release_date, processed_seqs, date_col_dict=config["date_col_dict"]):
     """
