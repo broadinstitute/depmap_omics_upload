@@ -719,7 +719,6 @@ def uploadAuxTables(
 
 def makePRLvMatrices(
     virtual_ids,
-    files_nummat=config["latest2fn_nummat_pr"],
     folder=config["working_dir"] + config["sampleset"],
     files_table=config["latest2fn_table_pr"],
     files_raw=config["latest2fn_raw_pr"],
@@ -741,20 +740,6 @@ def makePRLvMatrices(
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
         prs_to_release = omics_id_mapping_table['ProfileID'].tolist()
         print("uploading profile-level matrices to ", portal)
-        for latest_id, fn_dict in files_nummat.items():
-            for latest, virtual in fn_dict.items():
-                if latest not in exclude[portal]:
-                    uploadPRMatrix(
-                        prs_to_release,
-                        latest_id,
-                        taiga_id,
-                        latest,
-                        virtual,
-                        LocalFormat.CSV_MATRIX,
-                        pr_col="index",
-                        folder=folder + "/",
-                        change_desc="adding " + virtual,
-                    )
         for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
                 if latest not in exclude[portal]:
@@ -844,15 +829,15 @@ def makeModelLvMatrices(
     client = create_taiga_client_v3()
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
-        default_table = omics_id_mapping_table[omics_id_mapping_table['is_default_entry'] == True]
-        pr2model_dict = dict(list(zip(default_table.ProfileID, default_table.ModelID)))
-        h.dictToFile(pr2model_dict, folder + "/" + portal + "_pr2model_renaming.json")
+        default_table = omics_id_mapping_table[omics_id_mapping_table['isDefaultEntryForModel'] == "Yes"]
+        seq2model_dict = dict(list(zip(default_table.omics_sequencing_id, default_table.ModelID)))
+        h.dictToFile(seq2model_dict, folder + "/" + portal + "_seq2model_renaming.json")
         print("uploading model-level matrices to", portal)
         for latest_id, fn_dict in files_nummat.items():
             for latest, virtual in fn_dict.items():
                 if latest not in exclude[portal]:
                     uploadModelMatrix(
-                        pr2model_dict,
+                        seq2model_dict,
                         latest_id,
                         taiga_id,
                         latest,
@@ -866,7 +851,7 @@ def makeModelLvMatrices(
             for latest, virtual in fn_dict.items():
                 if latest not in exclude[portal]:
                     uploadModelMatrix(
-                        pr2model_dict,
+                        seq2model_dict,
                         latest_id,
                         taiga_id,
                         latest,
@@ -878,7 +863,7 @@ def makeModelLvMatrices(
                     )
         if upload_guide_matrices:
             uploadBinaryGuideMutationMatrixModel(
-                pr2model_dict, portal, taiga_virtual=taiga_id
+                seq2model_dict, portal, taiga_virtual=taiga_id
             )
 
 def makeWESandWGSMatrices(virtual_ids,
