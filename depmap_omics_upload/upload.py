@@ -474,7 +474,7 @@ def uploadPRMatrix(
         subset_mat = to_subset[to_subset.index.isin(prs)]
         subset_mat.to_csv(folder + virtual_fn + save_format)
     elif pr_col == "Tumor_Sample_Barcode":
-        subset_mat['isDefaultEntryForModel'] = to_subset[pr_col].map(dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC)))
+        subset_mat['isDefaultEntryForModel'] = to_subset[pr_col].map(dict(zip(c)))
         subset_mat = to_subset[to_subset[pr_col].isin(prs)].replace(
             {pr_col:dict(list(zip(mapping_table.omics_sequencing_id, mapping_table.ModelConditionID)))}
         )
@@ -641,15 +641,20 @@ def uploadMSRepeatProfile(
         num_static_cols (int): number of columns in the df that are static/not profiles
     """
     prs = mapping_table['omics_sequencing_id'].tolist()
+
     for latest_fn, virtual_fn in fn_mapping.items():
         print("loading ", latest_fn, " from latest")
         client = create_taiga_client_v3()
         to_subset = client.get(name=taiga_latest, file=latest_fn)
 
         print("subsetting ", latest_fn)
+        renaming_dict = dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC))
         subset_mat = to_subset.iloc[:, :num_static_cols].join(
             to_subset.iloc[:, num_static_cols:][list(set(to_subset.columns) & set(prs))]
         )
+        secondary_col = [renaming_dict[c] if c.startswith("CDS") else "NA" for c in subset_mat.columns]
+        subset_mat = subset_mat.rename(columns=dict(zip(mapping_table.omics_sequencing_id, mapping_table.ModelConditionID)))
+        subset_mat.columns = [subset_mat.columns.tolist(), secondary_col]
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
 
         print("uploading ", virtual_fn, " to virtual")
@@ -746,7 +751,6 @@ def makePRLvMatrices(
     client = create_taiga_client_v3()
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
-        seqs_to_release = omics_id_mapping_table['omics_sequencing_id'].tolist()
         print("uploading profile-level matrices to ", portal)
         for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
