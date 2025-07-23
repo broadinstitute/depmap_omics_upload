@@ -474,14 +474,16 @@ def uploadPRMatrix(
         subset_mat = to_subset[to_subset.index.isin(prs)]
         subset_mat.to_csv(folder + virtual_fn + save_format)
     elif pr_col == "Tumor_Sample_Barcode":
-        subset_mat['isDefaultEntryForModel'] = to_subset[pr_col].map(dict(zip(c)))
-        subset_mat = to_subset[to_subset[pr_col].isin(prs)].replace(
+        subset_mat = to_subset[to_subset[pr_col].isin(prs)]
+        subset_mat['isDefaultEntryForModel'] = subset_mat[pr_col].map(dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC)))
+        subset_mat = subset_mat.replace(
             {pr_col:dict(list(zip(mapping_table.omics_sequencing_id, mapping_table.ModelConditionID)))}
         )
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
     else:
-        subset_mat['isDefaultEntryForModel'] = to_subset[pr_col].map(dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC)))
-        subset_mat = to_subset[to_subset[pr_col].isin(prs)].replace(
+        subset_mat = to_subset[to_subset[pr_col].isin(prs)]
+        subset_mat['isDefaultEntryForModel'] = subset_mat[pr_col].map(dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC)))
+        subset_mat = subset_mat.replace(
             {pr_col:dict(list(zip(mapping_table.omics_sequencing_id, mapping_table.ModelConditionID)))}
         )
         subset_mat = subset_mat.rename(columns={pr_col: "ModelConditionID"})
@@ -504,6 +506,7 @@ def uploadPRMatrix(
 
 def uploadModelMatrix(
     pr2model_dict,
+    seq2isdefault_dict,
     taiga_latest,
     taiga_virtual,
     latest_fn,
@@ -541,14 +544,18 @@ def uploadModelMatrix(
 
     print("subsetting ", latest_fn)
     if pr_col == "index":
-        subset_mat = to_subset[to_subset.index.isin(set(pr2model_dict.keys()))].rename(
-            index=pr2model_dict
-        )
+        subset_mat = to_subset[to_subset.index.isin(set(pr2model_dict.keys()))]
+        subset_mat.loc[:,'ModelID'] = subset_mat.index.map(pr2model_dict)
+        subset_mat.loc[:,'isDefaultEntryForModel'] = subset_mat.index.map(seq2isdefault_dict)
+        subset_mat.set_index(["ModelID","isDefaultEntryForModel"], inplace=True, verify_integrity=True)
+
         subset_mat.dropna(axis=1, how='all').to_csv(folder + virtual_fn + ".csv")
     else:
         subset_mat = to_subset[
             to_subset[pr_col].isin(set(pr2model_dict.keys()))
-        ].replace({sampleid: pr2model_dict})
+        ]
+        subset_mat.loc[:, 'isDefaultEntryForModel'] = subset_mat[sampleid].map(seq2isdefault_dict)
+        subset_mat = subset_mat.replace({sampleid: pr2model_dict})
         subset_mat = subset_mat.rename(columns={sampleid: "ModelID"})
         subset_mat.to_csv(folder + virtual_fn + ".csv", index=False)
 
@@ -841,8 +848,9 @@ def makeModelLvMatrices(
     client = create_taiga_client_v3()
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
-        default_table = omics_id_mapping_table[omics_id_mapping_table['isDefaultEntryForModel'] == "Yes"]
-        seq2model_dict = dict(list(zip(default_table.omics_sequencing_id, default_table.ModelID)))
+        # default_table = omics_id_mapping_table[omics_id_mapping_table['isDefaultEntryForModel'] == "Yes"]
+        seq2model_dict = dict(list(zip(omics_id_mapping_table.omics_sequencing_id, omics_id_mapping_table.ModelID)))
+        seq2isdefault_dict = dict(list(zip(omics_id_mapping_table.omics_sequencing_id, omics_id_mapping_table.isDefaultEntryForModel)))
         h.dictToFile(seq2model_dict, folder + "/" + portal + "_seq2model_renaming.json")
         print("uploading model-level matrices to", portal)
         for latest_id, fn_dict in files_nummat.items():
@@ -850,6 +858,7 @@ def makeModelLvMatrices(
                 if latest not in exclude[portal]:
                     uploadModelMatrix(
                         seq2model_dict,
+                        seq2isdefault_dict,
                         latest_id,
                         taiga_id,
                         latest,
@@ -864,6 +873,7 @@ def makeModelLvMatrices(
                 if latest not in exclude[portal]:
                     uploadModelMatrix(
                         seq2model_dict,
+                        seq2isdefault_dict,
                         latest_id,
                         taiga_id,
                         latest,
