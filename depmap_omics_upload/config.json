@@ -1,6 +1,6 @@
 {
     "dryrun": false,
-    "sampleset": "24Q4",
+    "sampleset": "25Q3",
     "gumbo_env": "production",
     "gumbo_client_username": "gulatide",
     "gcp_billing_proj": "broad-firecloud-ccle",
@@ -144,17 +144,17 @@
         "merged_gene_cn_profile_for_achilles": "OmicsCNGene"
     },
     "virtual_filenames_nummat_mut_model": {
-        "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
-        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging"
+        "somaticMutations_genotypedMatrix_hotspot_withReplicates": "OmicsSomaticMutationsMatrixHotspot",
+        "somaticMutations_genotypedMatrix_damaging_withReplicates": "OmicsSomaticMutationsMatrixDamaging"
     },
     "virtual_filenames_table_fusion_model": {
         "fusions_filtered_profile": "OmicsFusionFiltered"
     },
     "virtual_filenames_table_cn_model": {},
     "virtual_filenames_table_mut_model": {
-        "somaticMutations_profile": "OmicsSomaticMutations",
-        "structuralVariants_profile": "OmicsStructuralVariants",
-        "structuralVariants_geneLevelMatrix_profile": "OmicsStructuralVariantsMatrix"
+        "somaticMutations_withReplicates": "OmicsSomaticMutations",
+        "structuralVariants_withReplicates": "OmicsStructuralVariants",
+        "structuralVariants_geneLevelMatrix_withReplicates": "OmicsStructuralVariantsMatrix"
     },
     "virtual_filenames_guidemut": {
         "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
@@ -190,14 +190,14 @@
         "merged_segments_profile": "OmicsCNSegmentsProfile"
     },
     "virtual_filenames_table_mut_pr": {
-        "somaticMutations_profile": "OmicsSomaticMutationsProfile",
-        "structuralVariants_profile": "OmicsStructuralVariantsProfile"
+        "somaticMutations_withReplicates": "OmicsSomaticMutationsProfile",
+        "structuralVariants_withReplicates": "OmicsStructuralVariantsProfile"
     },
     "virtual_filenames_raw_mut_pr": {
-        "somaticMutations_profile_maf": "OmicsSomaticMutationsMAFProfile.maf"
+        "somaticMutations_withReplicates_maf": "OmicsSomaticMutationsMAFProfile.maf"
     },
     "virtual_filenames_ms_repeat_pr": {
-        "ms_repeat_profile": "OmicsMicrosatelliteRepeatsProfile"
+        "ms_repeat_withReplicates": "OmicsMicrosatelliteRepeatsProfile"
     },
     "virtual": {
         "internal": "",
@@ -209,14 +209,14 @@
 	],
         "dmc": [],
         "public": [
-            "structuralVariants_profile",
-            "structuralVariants_geneLevelMatrix_profile",
+            "structuralVariants_withReplicates",
+            "structuralVariants_geneLevelMatrix_withReplicates",
             "armLevelCNA_profile"
 	]
     },
     "taiga_expression": "expression-d035",
     "taiga_cn": "cn-latest-d8d4",
-    "taiga_mutation": "mutations-latest-ed72",
+    "taiga_mutation": "mutations-latest-f263",
     "taiga_fusion": "fusions-95c9",
     "virtual_folder": "8d9c4c0691154a1f86b1b6e67c3fb683",
     "taiga_eternal": "depmap-a0ab",
