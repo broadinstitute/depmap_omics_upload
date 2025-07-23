@@ -549,7 +549,8 @@ def uploadModelMatrix(
         subset_mat.loc[:,'isDefaultEntryForModel'] = subset_mat.index.map(seq2isdefault_dict)
         subset_mat.set_index(["ModelID","isDefaultEntryForModel"], inplace=True, verify_integrity=True)
 
-        subset_mat.dropna(axis=1, how='all').to_csv(folder + virtual_fn + ".csv")
+        subset_mat.dropna(axis=1, how='all').to_parquet(folder + virtual_fn + ".parquet")
+        
     else:
         subset_mat = to_subset[
             to_subset[pr_col].isin(set(pr2model_dict.keys()))
@@ -557,7 +558,7 @@ def uploadModelMatrix(
         subset_mat.loc[:, 'isDefaultEntryForModel'] = subset_mat[sampleid].map(seq2isdefault_dict)
         subset_mat = subset_mat.replace({sampleid: pr2model_dict})
         subset_mat = subset_mat.rename(columns={sampleid: "ModelID"})
-        subset_mat.to_csv(folder + virtual_fn + ".csv", index=False)
+        subset_mat.to_csv(folder + virtual_fn + ".parquet", index=False)
 
 
     print("uploading ", virtual_fn, " to virtual")
@@ -566,7 +567,7 @@ def uploadModelMatrix(
         reason=change_desc,
         additions=[
             UploadedFile(
-                local_path=folder + virtual_fn + ".csv",
+                local_path=folder + virtual_fn + ".parquet",
                 name=virtual_fn,
                 format=matrix_format,
                 encoding="utf8",
@@ -863,7 +864,7 @@ def makeModelLvMatrices(
                         taiga_id,
                         latest,
                         virtual,
-                        LocalFormat.CSV_MATRIX,
+                        LocalFormat.PARQUET_TABLE,
                         pr_col="index",
                         folder=folder + "/",
                         change_desc="adding " + virtual,
@@ -878,7 +879,7 @@ def makeModelLvMatrices(
                         taiga_id,
                         latest,
                         virtual,
-                        LocalFormat.CSV_TABLE,
+                        LocalFormat.PARQUET_TABLE,
                         pr_col=sampleid,
                         folder=folder + "/",
                         change_desc="adding " + virtual,

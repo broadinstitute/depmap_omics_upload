@@ -137,8 +137,7 @@
         "stranded_proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1Stranded"
     },
     "virtual_filenames_nummat_cn_model": {
-        "merged_gene_cn_profile_for_achilles": "OmicsCNGene",
-        "globalGenomicFeatures_profile": "OmicsGlobalSignatures"
+        "globalGenomicFeatures_withReplicates": "OmicsGlobalSignatures"
     },
     "virtual_filenames_nummat_cn_model_wgs_and_wes": {
         "merged_gene_cn_profile_for_achilles": "OmicsCNGene"
