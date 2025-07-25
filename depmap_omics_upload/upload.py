@@ -558,7 +558,7 @@ def uploadModelMatrix(
         subset_mat.loc[:, 'isDefaultEntryForModel'] = subset_mat[sampleid].map(seq2isdefault_dict)
         subset_mat = subset_mat.replace({sampleid: pr2model_dict})
         subset_mat = subset_mat.rename(columns={sampleid: "ModelID"})
-        subset_mat.to_csv(folder + virtual_fn + ".parquet", index=False)
+        subset_mat.to_parquet(folder + virtual_fn + ".parquet", index=False)
 
 
     print("uploading ", virtual_fn, " to virtual")
