@@ -459,7 +459,7 @@ def uploadPRMatrix(
     client = create_taiga_client_v3()
     to_subset = client.get(name=taiga_latest, file=latest_fn)
 
-    prs = mapping_table['omics_sequencing_id'].tolist()
+    prs = mapping_table['SequencingID'].tolist()
 
     if "EntrezGeneID" in set(to_subset.columns):
         print("making sure Entrez column is Int64")
@@ -475,16 +475,16 @@ def uploadPRMatrix(
         subset_mat.to_csv(folder + virtual_fn + save_format)
     elif pr_col == "Tumor_Sample_Barcode":
         subset_mat = to_subset[to_subset[pr_col].isin(prs)]
-        subset_mat['isDefaultEntryForModel'] = subset_mat[pr_col].map(dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC)))
+        subset_mat['IsDefaultEntryForMC'] = subset_mat[pr_col].map(dict(zip(mapping_table.SequencingID, mapping_table.IsDefaultEntryForMC)))
         subset_mat = subset_mat.replace(
-            {pr_col:dict(list(zip(mapping_table.omics_sequencing_id, mapping_table.ModelConditionID)))}
+            {pr_col:dict(list(zip(mapping_table.SequencingID, mapping_table.ModelConditionID)))}
         )
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
     else:
         subset_mat = to_subset[to_subset[pr_col].isin(prs)]
-        subset_mat['isDefaultEntryForModel'] = subset_mat[pr_col].map(dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC)))
+        subset_mat['IsDefaultEntryForMC'] = subset_mat[pr_col].map(dict(zip(mapping_table.SequencingID, mapping_table.IsDefaultEntryForMC)))
         subset_mat = subset_mat.replace(
-            {pr_col:dict(list(zip(mapping_table.omics_sequencing_id, mapping_table.ModelConditionID)))}
+            {pr_col:dict(list(zip(mapping_table.SequencingID, mapping_table.ModelConditionID)))}
         )
         subset_mat = subset_mat.rename(columns={pr_col: "ModelConditionID"})
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
@@ -546,8 +546,8 @@ def uploadModelMatrix(
     if pr_col == "index":
         subset_mat = to_subset[to_subset.index.isin(set(pr2model_dict.keys()))]
         subset_mat.loc[:,'ModelID'] = subset_mat.index.map(pr2model_dict)
-        subset_mat.loc[:,'isDefaultEntryForModel'] = subset_mat.index.map(seq2isdefault_dict)
-        subset_mat.set_index(["ModelID","isDefaultEntryForModel"], inplace=True, verify_integrity=True)
+        subset_mat.loc[:,'IsDefaultEntryForModel'] = subset_mat.index.map(seq2isdefault_dict)
+        subset_mat.set_index(["ModelID","IsDefaultEntryForModel"], inplace=True, verify_integrity=True)
 
         subset_mat.dropna(axis=1, how='all').to_parquet(folder + virtual_fn + ".parquet")
         
@@ -555,7 +555,7 @@ def uploadModelMatrix(
         subset_mat = to_subset[
             to_subset[pr_col].isin(set(pr2model_dict.keys()))
         ]
-        subset_mat.loc[:, 'isDefaultEntryForModel'] = subset_mat[sampleid].map(seq2isdefault_dict)
+        subset_mat.loc[:, 'IsDefaultEntryForModel'] = subset_mat[sampleid].map(seq2isdefault_dict)
         subset_mat = subset_mat.replace({sampleid: pr2model_dict})
         subset_mat = subset_mat.rename(columns={sampleid: "ModelID"})
         subset_mat.to_parquet(folder + virtual_fn + ".parquet", index=False)
@@ -648,7 +648,7 @@ def uploadMSRepeatProfile(
         folder (str): where the file should be stores before uploading to virtual
         num_static_cols (int): number of columns in the df that are static/not profiles
     """
-    prs = mapping_table['omics_sequencing_id'].tolist()
+    prs = mapping_table['SequencingID'].tolist()
 
     for latest_fn, virtual_fn in fn_mapping.items():
         print("loading ", latest_fn, " from latest")
@@ -656,12 +656,12 @@ def uploadMSRepeatProfile(
         to_subset = client.get(name=taiga_latest, file=latest_fn)
 
         print("subsetting ", latest_fn)
-        renaming_dict = dict(zip(mapping_table.omics_sequencing_id, mapping_table.isDefaultEntryForMC))
+        renaming_dict = dict(zip(mapping_table.SequencingID, mapping_table.IsDefaultEntryForMC))
         subset_mat = to_subset.iloc[:, :num_static_cols].join(
             to_subset.iloc[:, num_static_cols:][list(set(to_subset.columns) & set(prs))]
         )
         secondary_col = [renaming_dict[c] if c.startswith("CDS") else "NA" for c in subset_mat.columns]
-        subset_mat = subset_mat.rename(columns=dict(zip(mapping_table.omics_sequencing_id, mapping_table.ModelConditionID)))
+        subset_mat = subset_mat.rename(columns=dict(zip(mapping_table.SequencingID, mapping_table.ModelConditionID)))
         subset_mat.columns = [subset_mat.columns.tolist(), secondary_col]
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
 
@@ -791,40 +791,6 @@ def makePRLvMatrices(
                         save_sep="\t",
                     )
         uploadMSRepeatProfile(omics_id_mapping_table, taiga_id, folder=folder + "/")
-
-def make_seq_to_model_dict(portal, release_date, processed_seqs, date_col_dict=config["date_col_dict"]):
-    """
-    portal (str): internal or public
-    release_date (str): yyyy-mm-dd
-    processed_seqs (set): list of processed sequencing IDs
-    
-    returns:
-    dict (sequencing id: model id): mapping from default sequencing id to model id
-    """
-    mytracker = track.SampleTracker()
-    omics_mapping = mytracker.read_omics_mapping_table()
-    pr_table = mytracker.read_pr_table()
-    omics_mapping = omics_mapping[omics_mapping['omics_sequencing_id'].isin(processed_seqs)]
-    omics_mapping.priority[omics_mapping['datatype'] == 'wes'] = 1000
-    
-    omics_mapping['sequence_type'] = omics_mapping['datatype']
-    omics_mapping['sequence_type'][(omics_mapping.datatype == 'wgs') | (omics_mapping.datatype == "wes")] = 'dna'
-
-    datecol = date_col_dict[portal]
-    
-    pr_table[datecol] = pr_table[datecol].fillna("2262-04-11")
-    pr_table[datecol] = pd.to_datetime(pr_table[datecol])
-    pr_table = pr_table.loc[pr_table[datecol] <= pd.to_datetime(release_date)]
-    
-    omics_mapping_merged = omics_mapping.merge(pr_table, left_on='omics_profile_id', right_on='ProfileID', how = "inner")
-    omics_default_index_for_model_id = omics_mapping_merged.groupby(['model_id','sequence_type'])['priority'].idxmin()
-    omics_mapping_by_model_and_mc = omics_mapping_merged.copy()
-    omics_mapping_by_model_and_mc['isDefaultEntryForModel'] =  'No' + '_' + omics_mapping_by_model_and_mc['omics_sequencing_id']
-    omics_mapping_by_model_and_mc.loc[omics_default_index_for_model_id,'isDefaultEntryForModel'] = 'Yes'
-    
-    default_only = omics_mapping_by_model_and_mc[omics_mapping_by_model_and_mc.isDefaultEntryForModel == "Yes"]
-    
-    return dict(zip(default_only['omics_sequencing_id'], default_only['model_id']))
     
 
 def makeModelLvMatrices(
@@ -849,9 +815,9 @@ def makeModelLvMatrices(
     client = create_taiga_client_v3()
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
-        # default_table = omics_id_mapping_table[omics_id_mapping_table['isDefaultEntryForModel'] == "Yes"]
-        seq2model_dict = dict(list(zip(omics_id_mapping_table.omics_sequencing_id, omics_id_mapping_table.ModelID)))
-        seq2isdefault_dict = dict(list(zip(omics_id_mapping_table.omics_sequencing_id, omics_id_mapping_table.isDefaultEntryForModel)))
+        # default_table = omics_id_mapping_table[omics_id_mapping_table['IsDefaultEntryForModel'] == "Yes"]
+        seq2model_dict = dict(list(zip(omics_id_mapping_table.SequencingID, omics_id_mapping_table.ModelID)))
+        seq2isdefault_dict = dict(list(zip(omics_id_mapping_table.SequencingID, omics_id_mapping_table.IsDefaultEntryForModel)))
         h.dictToFile(seq2model_dict, folder + "/" + portal + "_seq2model_renaming.json")
         print("uploading model-level matrices to", portal)
         for latest_id, fn_dict in files_nummat.items():
