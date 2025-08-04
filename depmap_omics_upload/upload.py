@@ -803,6 +803,7 @@ def makeModelLvMatrices(
     sampleid=config["sample_id"],
     exclude=config["exclude"],
     omics_id_mapping_table_name=config["omics_id_mapping_table_name"],
+    default_only=True,
 ):
     """for each portal, save and upload profile-indexed data matrices
 
@@ -815,7 +816,8 @@ def makeModelLvMatrices(
     client = create_taiga_client_v3()
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
-        # default_table = omics_id_mapping_table[omics_id_mapping_table['IsDefaultEntryForModel'] == "Yes"]
+        if default_only:
+            omics_id_mapping_table = omics_id_mapping_table[omics_id_mapping_table.IsDefaultEntryForModel == "Yes"]
         seq2model_dict = dict(list(zip(omics_id_mapping_table.SequencingID, omics_id_mapping_table.ModelID)))
         seq2isdefault_dict = dict(list(zip(omics_id_mapping_table.SequencingID, omics_id_mapping_table.IsDefaultEntryForModel)))
         h.dictToFile(seq2model_dict, folder + "/" + portal + "_seq2model_renaming.json")
