@@ -441,6 +441,7 @@ def uploadPRMatrix(
     change_desc="",
     save_format=".csv",
     save_sep=",",
+    sampleid=config["sample_id"],
 ):
     """subset, save and upload to taiga PR-level matrix
 
@@ -459,7 +460,7 @@ def uploadPRMatrix(
     client = create_taiga_client_v3()
     to_subset = client.get(name=taiga_latest, file=latest_fn)
 
-    prs = mapping_table['SequencingID'].tolist()
+    seqids = mapping_table['SequencingID'].tolist()
 
     if "EntrezGeneID" in set(to_subset.columns):
         print("making sure Entrez column is Int64")
@@ -471,22 +472,41 @@ def uploadPRMatrix(
 
     print("subsetting ", latest_fn)
     if pr_col == "index":
-        subset_mat = to_subset[to_subset.index.isin(prs)]
-        subset_mat.to_csv(folder + virtual_fn + save_format)
+        to_subset = to_subset.reset_index().rename(columns={"index": sampleid})
     elif pr_col == "Tumor_Sample_Barcode":
-        subset_mat = to_subset[to_subset[pr_col].isin(prs)]
-        subset_mat['IsDefaultEntryForMC'] = subset_mat[pr_col].map(dict(zip(mapping_table.SequencingID, mapping_table.IsDefaultEntryForMC)))
-        subset_mat = subset_mat.replace(
-            {pr_col:dict(list(zip(mapping_table.SequencingID, mapping_table.ModelConditionID)))}
-        )
-        subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
+        to_subset = to_subset.rename(columns={"Tumor_Sample_Barcode": sampleid})
+
+    subset_mat = to_subset[to_subset[sampleid].isin(seqids)]
+    subset_mat['ModelConditionID'] = subset_mat[sampleid].map(dict(zip(mapping_table.SequencingID, mapping_table.ModelConditionID)))
+    subset_mat['IsDefaultEntryForMC'] = subset_mat[sampleid].map(dict(zip(mapping_table.SequencingID, mapping_table.IsDefaultEntryForMC)))
+    subset_mat['ModelID'] = subset_mat[sampleid].map(dict(zip(mapping_table.SequencingID, mapping_table.ModelID)))
+    subset_mat['IsDefaultEntryForModel'] = subset_mat[sampleid].map(dict(zip(mapping_table.SequencingID, mapping_table.IsDefaultEntryForModel)))
+    if pr_col != "Tumor_Sample_Barcode":
+        subset_mat = subset_mat.rename(columns={sampleid: "SequencingID"})
+        subset_mat = subset_mat[
+            [
+                "SequencingID",
+                "ModelID",
+                "ModelConditionID",
+                "IsDefaultEntryForModel",
+                "IsDefaultEntryForMC",
+            ]
+            + [
+                c
+                for c in subset_mat
+                if c
+                not in [
+                    "SequencingID",
+                    "ModelID",
+                    "ModelConditionID",
+                    "IsDefaultEntryForModel",
+                    "IsDefaultEntryForMC",
+                ]
+            ]
+        ]
+        subset_mat.to_parquet(folder + virtual_fn + save_format, index=False)
     else:
-        subset_mat = to_subset[to_subset[pr_col].isin(prs)]
-        subset_mat['IsDefaultEntryForMC'] = subset_mat[pr_col].map(dict(zip(mapping_table.SequencingID, mapping_table.IsDefaultEntryForMC)))
-        subset_mat = subset_mat.replace(
-            {pr_col:dict(list(zip(mapping_table.SequencingID, mapping_table.ModelConditionID)))}
-        )
-        subset_mat = subset_mat.rename(columns={pr_col: "ModelConditionID"})
+        subset_mat = subset_mat.rename(columns={"SequencingID": sampleid})
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
 
     print("uploading ", virtual_fn, " to virtual")
@@ -656,13 +676,9 @@ def uploadMSRepeatProfile(
         to_subset = client.get(name=taiga_latest, file=latest_fn)
 
         print("subsetting ", latest_fn)
-        renaming_dict = dict(zip(mapping_table.SequencingID, mapping_table.IsDefaultEntryForMC))
         subset_mat = to_subset.iloc[:, :num_static_cols].join(
             to_subset.iloc[:, num_static_cols:][list(set(to_subset.columns) & set(prs))]
         )
-        secondary_col = [renaming_dict[c] if c.startswith("CDS") else "NA" for c in subset_mat.columns]
-        subset_mat = subset_mat.rename(columns=dict(zip(mapping_table.SequencingID, mapping_table.ModelConditionID)))
-        subset_mat.columns = [subset_mat.columns.tolist(), secondary_col]
         subset_mat.to_csv(folder + virtual_fn + save_format, sep=save_sep, index=False)
 
         print("uploading ", virtual_fn, " to virtual")
@@ -742,6 +758,7 @@ def uploadAuxTables(
 def makePRLvMatrices(
     virtual_ids,
     folder=config["working_dir"] + config["sampleset"],
+    files_nummat=config["latest2fn_nummat_pr"],
     files_table=config["latest2fn_table_pr"],
     files_raw=config["latest2fn_raw_pr"],
     sampleid=config["sample_id"],
@@ -760,6 +777,21 @@ def makePRLvMatrices(
     for portal, taiga_id in virtual_ids.items():
         omics_id_mapping_table = client.get(name=taiga_id, file=omics_id_mapping_table_name)
         print("uploading profile-level matrices to ", portal)
+        for latest_id, fn_dict in files_nummat.items():
+            for latest, virtual in fn_dict.items():
+                if latest not in exclude[portal]:
+                    uploadPRMatrix(
+                        omics_id_mapping_table,
+                        latest_id,
+                        taiga_id,
+                        latest,
+                        virtual,
+                        LocalFormat.PARQUET_TABLE,
+                        pr_col="index",
+                        folder=folder + "/",
+                        save_format=".parquet",
+                        change_desc="adding " + virtual,
+                    )
         for latest_id, fn_dict in files_table.items():
             for latest, virtual in fn_dict.items():
                 if latest not in exclude[portal]:
@@ -769,9 +801,10 @@ def makePRLvMatrices(
                         taiga_id,
                         latest,
                         virtual,
-                        LocalFormat.CSV_TABLE,
+                        LocalFormat.PARQUET_TABLE,
                         pr_col=sampleid,
                         folder=folder + "/",
+                        save_format=".parquet",
                         change_desc="adding " + virtual,
                     )
         for latest_id, fn_dict in files_raw.items():
