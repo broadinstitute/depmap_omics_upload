@@ -1,6 +1,7 @@
 # tracker.py
 from depmap_omics_upload.mgenepy.utils import helper as h
 import numpy as np
+import pandas as pd
 import os
 
 from depmap_omics_upload.mgenepy import terra
@@ -162,7 +163,7 @@ class SampleTracker:
             assert c in model_table.columns, c + " is not a column in model table"
         for seq_id in seq_table.index:
             pr = seq_table.loc[seq_id, self.pr_table_index]
-            if pr is not None:
+            if pr is not pd.NA:
                 mc = pr_table.loc[pr, "ModelCondition"]
                 model = mc_table.loc[mc, self.model_table_index]
                 for c in cols:
