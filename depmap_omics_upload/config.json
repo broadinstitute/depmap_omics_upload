@@ -1,6 +1,6 @@
 {
     "dryrun": false,
-    "sampleset": "25Q3",
+    "sampleset": "26Q1",
     "gumbo_env": "production",
     "gumbo_client_username": "gulatide",
     "gcp_billing_proj": "broad-firecloud-ccle",
@@ -137,7 +137,6 @@
         "stranded_proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1Stranded"
     },
     "virtual_filenames_nummat_cn_model": {
-        "globalGenomicFeatures_withReplicates": "OmicsGlobalSignatures"
     },
     "virtual_filenames_nummat_cn_model_wgs_and_wes": {
         "merged_gene_cn_profile_for_achilles": "OmicsCNGene"
@@ -198,10 +197,9 @@
         "structuralVariants_geneLevelMatrix_withReplicates": "OmicsStructuralVariantsMatrix"
     },
     "virtual_filenames_raw_mut_pr": {
-        "somaticMutations_withReplicates_maf": "OmicsSomaticMutationsMAFMC.maf"
+        "somaticMutations_withReplicates_maf": "OmicsSomaticMutationsMAF.maf"
     },
     "virtual_filenames_ms_repeat_pr": {
-        "ms_repeat_withReplicates": "OmicsMicrosatelliteRepeatsMC"
     },
     "virtual": {
         "internal": "",
