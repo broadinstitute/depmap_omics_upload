@@ -1,6 +1,6 @@
 {
     "dryrun": false,
-    "sampleset": "24Q4",
+    "sampleset": "26Q1",
     "gumbo_env": "production",
     "gumbo_client_username": "gulatide",
     "gcp_billing_proj": "broad-firecloud-ccle",
@@ -105,6 +105,8 @@
     "screen_table_index": "ScreenID",
     "str_table_name": "str_profile",
     "str_table_index": "id",
+    "omics_mapping_table_name": "omics_mapping",
+    "omics_mapping_table_index": "id",
     "ach_choice_table_name": "achilles_choice_table",
     "ach_choice_table_cols": [
         "ModelConditionID",
@@ -135,29 +137,29 @@
         "stranded_proteinCoding_genes_tpm_logp1_profile": "OmicsExpressionProteinCodingGenesTPMLogp1Stranded"
     },
     "virtual_filenames_nummat_cn_model": {
-        "merged_gene_cn_profile_for_achilles": "OmicsCNGene",
-        "globalGenomicFeatures_profile": "OmicsGlobalSignatures"
     },
     "virtual_filenames_nummat_cn_model_wgs_and_wes": {
         "merged_gene_cn_profile_for_achilles": "OmicsCNGene"
     },
     "virtual_filenames_nummat_mut_model": {
-        "somaticMutations_genotypedMatrix_hotspot_profile": "OmicsSomaticMutationsMatrixHotspot",
-        "somaticMutations_genotypedMatrix_damaging_profile": "OmicsSomaticMutationsMatrixDamaging"
+        "somaticMutations_genotypedMatrix_hotspot_withReplicates": "OmicsSomaticMutationsMatrixHotspot",
+        "somaticMutations_genotypedMatrix_damaging_withReplicates": "OmicsSomaticMutationsMatrixDamaging"
     },
     "virtual_filenames_table_fusion_model": {
         "fusions_filtered_profile": "OmicsFusionFiltered"
     },
     "virtual_filenames_table_cn_model": {},
     "virtual_filenames_table_mut_model": {
-        "somaticMutations_profile": "OmicsSomaticMutations",
-        "structuralVariants_profile": "OmicsStructuralVariants",
-        "structuralVariants_geneLevelMatrix_profile": "OmicsStructuralVariantsMatrix"
+        "somaticMutations_withReplicates": "OmicsSomaticMutations",
+        "structuralVariants_withReplicates": "OmicsStructuralVariants",
+        "structuralVariants_geneLevelMatrix_withReplicates": "OmicsStructuralVariantsMatrix"
     },
     "virtual_filenames_guidemut": {
         "binary_mutation_avana": "OmicsGuideMutationsBinaryAvana",
         "binary_mutation_ky": "OmicsGuideMutationsBinaryKY",
-        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne"
+        "binary_mutation_humagne": "OmicsGuideMutationsBinaryHumagne",
+        "binary_mutation_brunello": "OmicsGuideMutationsBinaryBrunello",
+        "binary_mutation_tkov3": "OmicsGuideMutationsBinaryTKOv3"
     },
     "virtual_filenames_nummat_exp_pr": {
         "genes_expectedCount_profile": "OmicsExpressionGenesExpectedCountProfile",
@@ -174,12 +176,14 @@
         "stranded_transcripts_expected_count_profile": "OmicsExpressionTranscriptsExpectedCountStrandedProfile"
     },
     "virtual_filenames_nummat_cn_pr": {
-        "globalGenomicFeatures_profile": "OmicsGlobalSignaturesProfile"
+        "globalGenomicFeatures_withReplicates": "OmicsGlobalSignatures"
     },
     "virtual_filenames_nummat_cn_pr_wgs_and_wes": {
-        "merged_gene_cn_profile_for_achilles": "OmicsCNGeneProfile"
     },
-    "virtual_filenames_nummat_mut_pr": {},
+    "virtual_filenames_nummat_mut_pr": {
+        "somaticMutations_genotypedMatrix_hotspot_withReplicates": "OmicsSomaticMutationsMatrixHotspot",
+        "somaticMutations_genotypedMatrix_damaging_withReplicates": "OmicsSomaticMutationsMatrixDamaging"
+    },
     "virtual_filenames_germline_pr": {},
     "virtual_filenames_table_fusion_pr": {
         "fusions_unfiltered_profile": "OmicsFusionUnfilteredProfile"
@@ -188,14 +192,14 @@
         "merged_segments_profile": "OmicsCNSegmentsProfile"
     },
     "virtual_filenames_table_mut_pr": {
-        "somaticMutations_profile": "OmicsSomaticMutationsProfile",
-        "structuralVariants_profile": "OmicsStructuralVariantsProfile"
+        "somaticMutations_withReplicates": "OmicsSomaticMutations",
+        "structuralVariants_withReplicates": "OmicsStructuralVariants",
+        "structuralVariants_geneLevelMatrix_withReplicates": "OmicsStructuralVariantsMatrix"
     },
     "virtual_filenames_raw_mut_pr": {
-        "somaticMutations_profile_maf": "OmicsSomaticMutationsMAFProfile.maf"
+        "somaticMutations_withReplicates_maf": "OmicsSomaticMutationsMAF.maf"
     },
     "virtual_filenames_ms_repeat_pr": {
-        "ms_repeat_profile": "OmicsMicrosatelliteRepeatsProfile"
     },
     "virtual": {
         "internal": "",
@@ -207,8 +211,8 @@
 	],
         "dmc": [],
         "public": [
-            "structuralVariants_profile",
-            "structuralVariants_geneLevelMatrix_profile",
+            "structuralVariants_withReplicates",
+            "structuralVariants_geneLevelMatrix_withReplicates",
             "armLevelCNA_profile"
 	]
     },

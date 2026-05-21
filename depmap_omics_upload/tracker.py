@@ -1,6 +1,7 @@
 # tracker.py
 from depmap_omics_upload.mgenepy.utils import helper as h
 import numpy as np
+import pandas as pd
 import os
 
 from depmap_omics_upload.mgenepy import terra
@@ -40,6 +41,8 @@ class SampleTracker:
         self.screen_table_index = config["screen_table_index"]
         self.str_table_name = config["str_table_name"]
         self.str_table_index = config["str_table_index"]
+        self.omics_mapping_table_name = config["omics_mapping_table_name"]
+        self.omics_mapping_table_index = config["omics_mapping_table_index"]
         self.client = gumbo_rest_client.Client(
             authed_session=gumbo_rest_client.create_authorized_session(
                 use_default_service_account=False
@@ -91,6 +94,10 @@ class SampleTracker:
         str_table = self.client.get(self.str_table_name)
         str_table = str_table.set_index(self.str_table_index)
         return str_table
+    
+    def read_omics_mapping_table(self):
+        omics_mapping_table = self.client.get(self.omics_mapping_table_name).set_index(self.omics_mapping_table_index)
+        return omics_mapping_table
 
     def write_mc_table(self, df):
         # assumes df's columns are camelCase, and converts it back to snake_case
@@ -156,7 +163,7 @@ class SampleTracker:
             assert c in model_table.columns, c + " is not a column in model table"
         for seq_id in seq_table.index:
             pr = seq_table.loc[seq_id, self.pr_table_index]
-            if pr is not None:
+            if pr is not pd.NA:
                 mc = pr_table.loc[pr, "ModelCondition"]
                 model = mc_table.loc[mc, self.model_table_index]
                 for c in cols:
